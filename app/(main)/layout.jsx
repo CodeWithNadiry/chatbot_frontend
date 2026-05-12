@@ -21,15 +21,6 @@ const dmSans = DM_Sans({
   weight: ["400", "500", "600"],
 });
 
-export const metadata = {
-  title: "IntelliChat – AI Knowledge Base Chatbot",
-  description:
-    "IntelliChat is a document-driven AI chatbot that lets users upload files, build a knowledge base, and ask questions using intelligent retrieval-augmented generation for accurate, context-aware answers.",
-  icons: {
-    icon: "/favicon.svg",
-  },
-};
-
 export default function MainLayout({ children }) {
   const { user } = useAuthStore();
   const router = useRouter();

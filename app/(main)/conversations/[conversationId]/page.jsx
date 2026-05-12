@@ -22,13 +22,12 @@ const SingleConversation = () => {
       try {
         setHasLoaded(false);
 
+        console.log("TOKEN FROM STORE:", token);
         const res = await fetch(
           `https://chatbotbackend-production-dc6c.up.railway.app/chats/${conversationId}`,
           {
             headers: {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
+              Authorization: `Bearer ${token}`,
             },
           },
         );
@@ -51,7 +50,7 @@ const SingleConversation = () => {
     }
 
     if (conversationId) getMessages();
-  }, [conversationId]);
+  }, [conversationId, token]);
 
   async function sendQuery(question) {
     if (!question.trim()) return;
@@ -66,17 +65,21 @@ const SingleConversation = () => {
     setIsLoading(true);
 
     try {
-      const res = await fetch("http://localhost:5000/chats/query", {
-        method: "POST",
-        body: JSON.stringify({
-          question,
-          userId: user.userId,
-          conversationId,
-        }),
-        headers: {
-          "Content-Type": "application/json",
+      const res = await fetch(
+        "https://chatbotbackend-production-dc6c.up.railway.app/chats/query",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            question,
+            userId: user.userId,
+            conversationId,
+          }),
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          },
         },
-      });
+      );
 
       if (!res.ok) throw new Error("Failed to send query");
 

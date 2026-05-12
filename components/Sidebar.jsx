@@ -20,6 +20,7 @@ const Sidebar = () => {
   const [conversations, setConversations] = useState([]);
 
   const fetchConversations = async () => {
+     if (!token) return;
     try {
       const res = await fetch("https://chatbotbackend-production-dc6c.up.railway.app/chats", {
         headers: {
@@ -34,9 +35,9 @@ const Sidebar = () => {
   };
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchConversations();
-  }, [refreshChats]);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  fetchConversations();
+}, [refreshChats, token]);
 
   function handleChangeRoute(id) {
     router.push(`/conversations/${id}`);
