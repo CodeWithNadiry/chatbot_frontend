@@ -19,7 +19,7 @@ const Sidebar = () => {
 
   const fetchConversations = async () => {
     try {
-      const res = await fetch("http://localhost:5000/chats");
+      const res = await fetch("https://chatbotbackend-production-dc6c.up.railway.app/chats");
       const data = await res.json();
       setConversations(data.conversations || []);
     } catch (err) {

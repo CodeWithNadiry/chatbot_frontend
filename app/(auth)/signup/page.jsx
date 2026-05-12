@@ -61,15 +61,18 @@ const Signup = () => {
     try {
       setIsLoading(true);
 
-      const res = await fetch("http://localhost:5000/auth/signup", {
-        method: "POST",
-        body: JSON.stringify({
-          ...userInputs,
-        }),
-        headers: {
-          "Content-Type": "application/json",
+      const res = await fetch(
+        "https://chatbotbackend-production-dc6c.up.railway.app/auth/signup",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            ...userInputs,
+          }),
+          headers: {
+            "Content-Type": "application/json",
+          },
         },
-      });
+      );
 
       const data = await res.json();
 

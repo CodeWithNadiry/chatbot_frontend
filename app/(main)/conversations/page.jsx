@@ -33,17 +33,20 @@ const ConversationsPage = () => {
     setIsLoading(true);
 
     try {
-      const res = await fetch("http://localhost:5000/chats/query", {
-        method: "POST",
-        body: JSON.stringify({
-          question,
-          userId: user.userId,
-          conversationId: undefined,
-        }),
-        headers: {
-          "Content-Type": "application/json",
+      const res = await fetch(
+        "https://chatbotbackend-production-dc6c.up.railway.app/chats/query",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            question,
+            userId: user.userId,
+            conversationId: undefined,
+          }),
+          headers: {
+            "Content-Type": "application/json",
+          },
         },
-      });
+      );
 
       if (!res.ok) throw new Error("Failed to send query");
 

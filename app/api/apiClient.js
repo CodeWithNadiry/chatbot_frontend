@@ -1,7 +1,7 @@
 // import { useAuthStore } from "../../store/useAuthStore"
 import axios from "axios";
 export const apiClient = axios.create({
-  baseUrl: "http://localhost:5000",
+  baseUrl: "https://chatbotbackend-production-dc6c.up.railway.app",
 });
 
 // apiClient.interceptors.request.use(config => {

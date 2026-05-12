@@ -23,7 +23,7 @@ async function loginAction(login, router, prevState, formData) {
   }
 
   try {
-    const res = await fetch("http://localhost:5000/auth/login", {
+    const res = await fetch("https://chatbotbackend-production-dc6c.up.railway.app/auth/login", {
       method: "POST",
       body: JSON.stringify({ email, password }),
       headers: {

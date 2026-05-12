@@ -20,7 +20,7 @@ const SingleConversation = () => {
     async function getMessages() {
       try {
         const res = await fetch(
-          `http://localhost:5000/chats/${conversationId}`,
+          `https://chatbotbackend-production-dc6c.up.railway.app/chats/${conversationId}`,
         );
 
         if (!res.ok) throw new Error("Failed to fetch messages");

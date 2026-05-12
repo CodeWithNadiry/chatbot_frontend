@@ -97,7 +97,7 @@ const DocumentsPage = () => {
 
   async function getDocs() {
     try {
-      const res = await fetch("http://localhost:5000cuments", {
+      const res = await fetch("https://chatbotbackend-production-dc6c.up.railway.app/documents", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -134,7 +134,7 @@ const DocumentsPage = () => {
     try {
       setIsLoading(true);
 
-      const res = await fetch("http://localhost:5000/documents/upload", {
+      const res = await fetch("https://chatbotbackend-production-dc6c.up.railway.app/documents/upload", {
         method: "POST",
         body: formData,
         headers: {
@@ -161,7 +161,7 @@ const DocumentsPage = () => {
   async function handleDelete() {
     try {
       const res = await fetch(
-        `http://localhost:5000/documents/${selectedDocumentId}`,
+        `https://chatbotbackend-production-dc6c.up.railway.app/documents/${selectedDocumentId}`,
         {
           method: "DELETE",
           headers: {
