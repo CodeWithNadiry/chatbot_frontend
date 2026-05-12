@@ -9,7 +9,7 @@ import { useAuthStore } from "../../../../store/useAuthStore";
 
 const SingleConversation = () => {
   const { conversationId } = useParams();
-  const { user } = useAuthStore();
+  const { user, token } = useAuthStore();
 
   const [messages, setMessages] = useState([]);
   const [userInput, setUserInput] = useState("");
@@ -23,7 +23,14 @@ const SingleConversation = () => {
         setHasLoaded(false);
 
         const res = await fetch(
-          `https://chatbotbackend-production-dc6c.up.railway.app/chats/${conversationId}`
+          `https://chatbotbackend-production-dc6c.up.railway.app/chats/${conversationId}`,
+          {
+            headers: {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            },
+          },
         );
 
         if (!res.ok) throw new Error("Failed to fetch messages");
@@ -31,12 +38,10 @@ const SingleConversation = () => {
         const data = await res.json();
 
         setMessages(
-          [...data.messages]
-            .reverse()
-            .map((m) => ({
-              role: m.role,
-              content: m.content,
-            }))
+          [...data.messages].reverse().map((m) => ({
+            role: m.role,
+            content: m.content,
+          })),
         );
       } catch (err) {
         setError(err.message);
@@ -61,20 +66,17 @@ const SingleConversation = () => {
     setIsLoading(true);
 
     try {
-      const res = await fetch(
-        "http://localhost:5000/chats/query",
-        {
-          method: "POST",
-          body: JSON.stringify({
-            question,
-            userId: user.userId,
-            conversationId,
-          }),
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const res = await fetch("http://localhost:5000/chats/query", {
+        method: "POST",
+        body: JSON.stringify({
+          question,
+          userId: user.userId,
+          conversationId,
+        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
       if (!res.ok) throw new Error("Failed to send query");
 
@@ -102,7 +104,6 @@ const SingleConversation = () => {
       <div className="flex flex-col flex-1 overflow-hidden">
         <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 pt-10">
           <div className="max-w-5xl mx-auto flex flex-col gap-6 pb-4">
-
             {!hasLoaded ? null : messages.length === 0 && !isLoading ? (
               <p className="text-gray-400 text-sm">No messages yet</p>
             ) : (
@@ -121,11 +122,8 @@ const SingleConversation = () => {
             )}
 
             {isLoading && (
-              <p className="text-sm text-gray-400 animate-pulse">
-                Thinking...
-              </p>
+              <p className="text-sm text-gray-400 animate-pulse">Thinking...</p>
             )}
-
           </div>
         </div>
 

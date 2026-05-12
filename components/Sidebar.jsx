@@ -7,10 +7,12 @@ import { useEffect, useState } from "react";
 import { useConversationStore } from "../store/useConversation";
 import { useRouter, usePathname } from "next/navigation";
 import { useSidebarStore } from "../store/useSidebar";
+import { useAuthStore } from "../store/useAuthStore";
 
 const Sidebar = () => {
   const router = useRouter();
   const pathname = usePathname();
+  const {token} = useAuthStore();
 
   const { isOpen, closeSidebar } = useSidebarStore();
   const { refreshChats } = useConversationStore();
@@ -19,7 +21,11 @@ const Sidebar = () => {
 
   const fetchConversations = async () => {
     try {
-      const res = await fetch("https://chatbotbackend-production-dc6c.up.railway.app/chats");
+      const res = await fetch("https://chatbotbackend-production-dc6c.up.railway.app/chats", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        }
+      });
       const data = await res.json();
       setConversations(data.conversations || []);
     } catch (err) {
