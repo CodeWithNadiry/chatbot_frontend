@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 100 100">
+  <!-- Document page -->
+  <rect x="10" y="6" width="55" height="70" rx="9" fill="#dce6fb"/>
+  <rect x="19" y="21" width="28" height="5" rx="2.5" fill="#8aaaf0"/>
+  <rect x="19" y="33" width="22" height="5" rx="2.5" fill="#8aaaf0"/>
+  <rect x="19" y="45" width="25" height="5" rx="2.5" fill="#8aaaf0"/>
+  <!-- Search lens circle -->
+  <circle cx="66" cy="66" r="27" fill="#2d5be3"/>
+  <circle cx="66" cy="66" r="12" fill="none" stroke="white" stroke-width="4"/>
+  <circle cx="66" cy="66" r="4" fill="white"/>
+  <!-- Lens handle -->
+  <line x1="74" y1="58" x2="81" y2="51" stroke="white" stroke-width="3.5" stroke-linecap="round"/>
+  <circle cx="82" cy="50" r="4" fill="white"/>
+</svg>
