@@ -1,7 +1,14 @@
+"use client";
+
+import { useEffect } from "react";
 import { Fraunces, DM_Sans } from "next/font/google";
+import { useRouter } from "next/navigation";
+
 import "../globals.css";
-import Sidebar from '../../components/Sidebar'
+import Sidebar from "../../components/Sidebar";
 import ProtectedRoutes from "../../components/ProtectedRoutes";
+import { useAuthStore } from "../../store/useAuthStore";
+
 const fraunces = Fraunces({
   subsets: ["latin"],
   variable: "--font-fraunces",
@@ -24,12 +31,25 @@ export const metadata = {
 };
 
 export default function MainLayout({ children }) {
+  const { user } = useAuthStore();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!user) {
+      router.replace("/login");
+    }
+  }, [user, router]);
+
+  if (!user) {
+    return null;
+  }
+
   return (
     <ProtectedRoutes>
       <div className={`flex ${fraunces.variable} ${dmSans.variable}`}>
-      <Sidebar />
-      <main className="flex-1">{children}</main>
-    </div>
+        <Sidebar />
+        <main className="flex-1">{children}</main>
+      </div>
     </ProtectedRoutes>
   );
 }
