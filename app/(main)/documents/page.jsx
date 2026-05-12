@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -17,9 +16,7 @@ const DocumentsPage = () => {
   const [selectedDocumentId, setSelectedDocumentId] = useState(null);
 
   const { token } = useAuthStore();
-
   const filesRef = useRef();
-
   const { activeModal, openModal, closeModal } = useModalStore();
 
   const [userInputs, setUserInputs] = useState({
@@ -52,18 +49,19 @@ const DocumentsPage = () => {
 
   function handleDrop(e) {
     e.preventDefault();
-
     setIsDragging(false);
 
     const dropped = Array.from(e.dataTransfer.files);
 
-    setFiles(dropped);
+    setFiles((prev) => [...prev, ...dropped]);
   }
 
   function handleFileSelect(e) {
     const selected = Array.from(e.target.files);
 
-    setFiles(selected);
+    setFiles((prev) => [...prev, ...selected]);
+
+    filesRef.current.value = "";
   }
 
   function resetFiles() {
@@ -97,11 +95,14 @@ const DocumentsPage = () => {
 
   async function getDocs() {
     try {
-      const res = await fetch("https://chatbotbackend-production-dc6c.up.railway.app/documents", {
-        headers: {
-          Authorization: `Bearer ${token}`,
+      const res = await fetch(
+        "https://chatbotbackend-production-dc6c.up.railway.app/documents",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
-      });
+      );
 
       if (!res.ok) {
         throw new Error("Failed to fetch documents");
@@ -134,13 +135,16 @@ const DocumentsPage = () => {
     try {
       setIsLoading(true);
 
-      const res = await fetch("https://chatbotbackend-production-dc6c.up.railway.app/documents/upload", {
-        method: "POST",
-        body: formData,
-        headers: {
-          Authorization: `Bearer ${token}`,
+      const res = await fetch(
+        "https://chatbotbackend-production-dc6c.up.railway.app/documents/upload",
+        {
+          method: "POST",
+          body: formData,
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
-      });
+      );
 
       if (!res.ok) {
         throw new Error("Upload failed");
@@ -233,7 +237,6 @@ const DocumentsPage = () => {
                       className="flex justify-between text-xs text-gray-600"
                     >
                       <span className="truncate">{file.name}</span>
-
                       <span>{(file.size / 1024).toFixed(1)} KB</span>
                     </div>
                   ))}
@@ -271,7 +274,6 @@ const DocumentsPage = () => {
                   >
                     <div className="flex justify-between text-sm">
                       <p className="text-gray-700">{item.label}</p>
-
                       <p className="text-[#2D5BE3] font-medium">{item.value}</p>
                     </div>
 
