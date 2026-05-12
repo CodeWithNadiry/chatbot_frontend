@@ -45,7 +45,7 @@ const ConversationsPage = () => {
           headers: {
             "Content-Type": "application/json",
           },
-        },
+        }
       );
 
       if (!res.ok) throw new Error("Failed to send query");
@@ -71,6 +71,7 @@ const ConversationsPage = () => {
       <div className="flex flex-col flex-1 overflow-hidden">
         <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 pt-10">
           <div className="max-w-5xl mx-auto flex flex-col gap-6 pb-4">
+
             {messages.length === 0 && !isLoading ? (
               <NoMessageContent send={sendQuery} />
             ) : (
@@ -85,8 +86,11 @@ const ConversationsPage = () => {
             )}
 
             {isLoading && (
-              <p className="text-sm text-gray-400 animate-pulse">Thinking...</p>
+              <p className="text-sm text-gray-400 animate-pulse">
+                Thinking...
+              </p>
             )}
+
           </div>
         </div>
 

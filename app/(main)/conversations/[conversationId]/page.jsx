@@ -15,12 +15,15 @@ const SingleConversation = () => {
   const [userInput, setUserInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [hasLoaded, setHasLoaded] = useState(false);
 
   useEffect(() => {
     async function getMessages() {
       try {
+        setHasLoaded(false);
+
         const res = await fetch(
-          `https://chatbotbackend-production-dc6c.up.railway.app/chats/${conversationId}`,
+          `https://chatbotbackend-production-dc6c.up.railway.app/chats/${conversationId}`
         );
 
         if (!res.ok) throw new Error("Failed to fetch messages");
@@ -28,15 +31,17 @@ const SingleConversation = () => {
         const data = await res.json();
 
         setMessages(
-          data.messages
+          [...data.messages]
+            .reverse()
             .map((m) => ({
               role: m.role,
               content: m.content,
             }))
-            .reverse(),
         );
       } catch (err) {
         setError(err.message);
+      } finally {
+        setHasLoaded(true);
       }
     }
 
@@ -52,20 +57,24 @@ const SingleConversation = () => {
     };
 
     setMessages((prev) => [...prev, userMessage]);
+    setUserInput("");
     setIsLoading(true);
 
     try {
-      const res = await fetch("http://localhost:5000/chats/query", {
-        method: "POST",
-        body: JSON.stringify({
-          question,
-          userId: user.userId,
-          conversationId,
-        }),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      const res = await fetch(
+        "http://localhost:5000/chats/query",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            question,
+            userId: user.userId,
+            conversationId,
+          }),
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (!res.ok) throw new Error("Failed to send query");
 
@@ -93,7 +102,8 @@ const SingleConversation = () => {
       <div className="flex flex-col flex-1 overflow-hidden">
         <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 pt-10">
           <div className="max-w-5xl mx-auto flex flex-col gap-6 pb-4">
-            {messages.length === 0 && !isLoading ? (
+
+            {!hasLoaded ? null : messages.length === 0 && !isLoading ? (
               <p className="text-gray-400 text-sm">No messages yet</p>
             ) : (
               messages.map((message, index) => (
@@ -111,8 +121,11 @@ const SingleConversation = () => {
             )}
 
             {isLoading && (
-              <p className="text-sm text-gray-400 animate-pulse">Thinking...</p>
+              <p className="text-sm text-gray-400 animate-pulse">
+                Thinking...
+              </p>
             )}
+
           </div>
         </div>
 
