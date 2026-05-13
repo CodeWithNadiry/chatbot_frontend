@@ -1,7 +1,7 @@
 "use client";
 
 import { Fraunces, DM_Sans } from "next/font/google";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
 
 import "../globals.css";
@@ -24,12 +24,17 @@ const dmSans = DM_Sans({
 export default function MainLayout({ children }) {
   const { token, hasHydrated } = useAuthStore();
   const router = useRouter();
+  const pathname = usePathname();
+
+  const isAuthPage = pathname === "/login" || pathname === "/signup";
 
   useEffect(() => {
-    if (hasHydrated && !token) {
+    if (!hasHydrated) return;
+
+    if (!token && !isAuthPage) {
       router.replace("/login");
     }
-  }, [hasHydrated, token, router]);
+  }, [hasHydrated, token, isAuthPage, router]);
 
   if (!hasHydrated) return null;
 
