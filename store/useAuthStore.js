@@ -3,25 +3,26 @@ import { persist } from "zustand/middleware";
 
 export const useAuthStore = create(
   persist(
-    (set) => ({
+    (set, get) => ({
       token: null,
       user: null,
-      hasHydrated: false,
 
-      setHasHydrated: (state) => set({ hasHydrated: state }),
+      login: (data) =>
+        set({
+          token: data.token,
+          user: data.user,
+        }),
 
-      login: (data) => set({ token: data.token, user: data.user }),
+      logout: () =>
+        set({
+          token: null,
+          user: null,
+        }),
 
-      logout: () => set({ token: null, user: null }),
+      isLoggedIn: () => !!get().token,
     }),
     {
       name: "auth-storage",
-
-      onRehydrateStorage: () => (state) => {
-        if (state) {
-          state.setHasHydrated(true);
-        }
-      },
     }
   )
 );

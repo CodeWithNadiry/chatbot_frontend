@@ -1,7 +1,6 @@
 "use client";
 
 import { Fraunces, DM_Sans } from "next/font/google";
-
 import "../globals.css";
 import Sidebar from "../../components/Sidebar";
 import ProtectedRoutes from "../../components/ProtectedRoutes";
