@@ -18,8 +18,6 @@ export const useAuthStore = create(
           token: null,
           user: null,
         }),
-
-      isLoggedIn: () => !!get().token,
     }),
     {
       name: "auth-storage",
