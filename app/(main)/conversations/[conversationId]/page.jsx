@@ -9,7 +9,7 @@ import { useAuthStore } from "../../../../store/useAuthStore";
 
 const SingleConversation = () => {
   const { conversationId } = useParams();
-  const { user, token } = useAuthStore();
+  const {  token } = useAuthStore();
 
   const [messages, setMessages] = useState([]);
   const [userInput, setUserInput] = useState("");
@@ -77,7 +77,6 @@ const SingleConversation = () => {
           method: "POST",
           body: JSON.stringify({
             question,
-            userId: user.userId,
             conversationId,
           }),
           headers: {

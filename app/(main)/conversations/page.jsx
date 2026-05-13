@@ -7,7 +7,6 @@ import Header from "../../../components/Header";
 import Input from "../../../components/conversations/Input";
 import NoMessageContent from "../../../components/conversations/NoMessageContent";
 
-import { useAuthStore } from "../../../store/useAuthStore";
 import { useConversationStore } from "../../../store/useConversation";
 
 const ConversationsPage = () => {
@@ -16,7 +15,6 @@ const ConversationsPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const { user } = useAuthStore();
   const { triggerRefresh } = useConversationStore();
   const router = useRouter();
 
@@ -39,7 +37,6 @@ const ConversationsPage = () => {
           method: "POST",
           body: JSON.stringify({
             question,
-            userId: user.userId,
             conversationId: undefined,
           }),
           headers: {
