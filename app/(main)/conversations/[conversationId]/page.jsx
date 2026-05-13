@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
 import Header from "../../../../components/Header";
 import Input from "../../../../components/conversations/Input";
@@ -16,13 +16,12 @@ const SingleConversation = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [hasLoaded, setHasLoaded] = useState(false);
-
+  const router = useRouter();
   useEffect(() => {
     async function getMessages() {
       try {
         setHasLoaded(false);
 
-        console.log("TOKEN FROM STORE:", token);
         const res = await fetch(
           `https://chatbotbackend-production-dc6c.up.railway.app/chats/${conversationId}`,
           {
@@ -32,7 +31,14 @@ const SingleConversation = () => {
           },
         );
 
-        if (!res.ok) throw new Error("Failed to fetch messages");
+        if (res.status === 404) {
+          router.replace("/conversations");
+          return;
+        }
+
+        if (!res.ok) {
+          throw new Error("Failed to fetch messages");
+        }
 
         const data = await res.json();
 
@@ -100,6 +106,9 @@ const SingleConversation = () => {
 
   if (error) return <p>{error}</p>;
 
+  if (!conversationId) {
+    return router.push("/converstions");
+  }
   return (
     <div className="flex flex-col h-screen bg-[#F9FAFB] overflow-hidden">
       <Header title="Conversation" btnText="+ New Chat" />

@@ -38,3 +38,6 @@ export const useAuthStore = create(
     }
   )
 );
+
+// Wait until Zustand finishes hydrating persisted auth state
+// before checking authentication to prevent refresh redirect issues
