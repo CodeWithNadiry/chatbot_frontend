@@ -2,6 +2,7 @@
 
 import { Fraunces, DM_Sans } from "next/font/google";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 import "../globals.css";
 import Sidebar from "../../components/Sidebar";
@@ -21,13 +22,19 @@ const dmSans = DM_Sans({
 });
 
 export default function MainLayout({ children }) {
-  const { token } = useAuthStore();
+  const { token, hasHydrated } = useAuthStore();
+
   const router = useRouter();
 
-    if (!token) {
-    router.replace("/login");
-    return null;
-  }
+  useEffect(() => {
+    if (hasHydrated && !token) {
+      router.replace("/login");
+    }
+  }, [hasHydrated, token, router]);
+
+  if (!hasHydrated) return null;
+
+  if (!token) return null;
 
   return (
     <ProtectedRoutes>
