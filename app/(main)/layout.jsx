@@ -21,10 +21,10 @@ const dmSans = DM_Sans({
 });
 
 export default function MainLayout({ children }) {
-  const { user } = useAuthStore();
+  const { isLoggedIn } = useAuthStore();
   const router = useRouter();
 
-    if (!user) {
+    if (!isLoggedIn) {
     router.replace("/login");
     return null;
   }
