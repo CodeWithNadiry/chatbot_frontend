@@ -23,7 +23,6 @@ const dmSans = DM_Sans({
 
 export default function MainLayout({ children }) {
   const { token, hasHydrated } = useAuthStore();
-
   const router = useRouter();
 
   useEffect(() => {
@@ -33,8 +32,6 @@ export default function MainLayout({ children }) {
   }, [hasHydrated, token, router]);
 
   if (!hasHydrated) return null;
-
-  if (!token) return null;
 
   return (
     <ProtectedRoutes>
