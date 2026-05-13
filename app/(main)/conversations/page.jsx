@@ -8,13 +8,14 @@ import Input from "../../../components/conversations/Input";
 import NoMessageContent from "../../../components/conversations/NoMessageContent";
 
 import { useConversationStore } from "../../../store/useConversation";
+import { useAuthStore } from "../../../store/useAuthStore";
 
 const ConversationsPage = () => {
   const [userInput, setUserInput] = useState("");
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-
+  const { token } = useAuthStore();
   const { triggerRefresh } = useConversationStore();
   const router = useRouter();
 
@@ -41,6 +42,7 @@ const ConversationsPage = () => {
           }),
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
         },
       );
