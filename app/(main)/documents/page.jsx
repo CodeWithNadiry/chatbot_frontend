@@ -100,6 +100,7 @@ const DocumentsPage = () => {
         "https://chatbotbackend-production-dc6c.up.railway.app/documents",
         {
           headers: {
+            "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
         },

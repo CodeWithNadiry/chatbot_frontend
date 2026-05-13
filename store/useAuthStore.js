@@ -6,38 +6,22 @@ export const useAuthStore = create(
     (set) => ({
       token: null,
       user: null,
-
       hasHydrated: false,
 
-      setHasHydrated: (state) => {
-        set({
-          hasHydrated: state,
-        });
-      },
+      setHasHydrated: (state) => set({ hasHydrated: state }),
 
-      login: (data) => {
-        set({
-          token: data.token,
-          user: data.user,
-        });
-      },
+      login: (data) => set({ token: data.token, user: data.user }),
 
-      logout: () => {
-        set({
-          token: null,
-          user: null,
-        });
-      },
+      logout: () => set({ token: null, user: null }),
     }),
     {
       name: "auth-storage",
 
       onRehydrateStorage: () => (state) => {
-        state.setHasHydrated(true);
+        if (state) {
+          state.setHasHydrated(true);
+        }
       },
     }
   )
 );
-
-// Wait until Zustand finishes hydrating persisted auth state
-// before checking authentication to prevent refresh redirect issues
