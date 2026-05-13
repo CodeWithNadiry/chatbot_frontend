@@ -12,7 +12,7 @@ import { useAuthStore } from "../store/useAuthStore";
 const Sidebar = () => {
   const router = useRouter();
   const pathname = usePathname();
-  const {token} = useAuthStore();
+  const { token } = useAuthStore();
 
   const { isOpen, closeSidebar } = useSidebarStore();
   const { refreshChats } = useConversationStore();
@@ -20,13 +20,16 @@ const Sidebar = () => {
   const [conversations, setConversations] = useState([]);
 
   const fetchConversations = async () => {
-     if (!token) return;
+    if (!token) return;
     try {
-      const res = await fetch("https://chatbotbackend-production-dc6c.up.railway.app/chats", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        }
-      });
+      const res = await fetch(
+        "https://chatbotbackend-production-dc6c.up.railway.app/chats",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
       const data = await res.json();
       setConversations(data.conversations || []);
     } catch (err) {
@@ -35,9 +38,9 @@ const Sidebar = () => {
   };
 
   useEffect(() => {
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  fetchConversations();
-}, [refreshChats, token]);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchConversations();
+  }, [refreshChats, token]);
 
   function handleChangeRoute(id) {
     router.push(`/conversations/${id}`);
