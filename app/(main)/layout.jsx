@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import { Fraunces, DM_Sans } from "next/font/google";
 import { useRouter } from "next/navigation";
 
@@ -25,13 +24,8 @@ export default function MainLayout({ children }) {
   const { user } = useAuthStore();
   const router = useRouter();
 
-  useEffect(() => {
     if (!user) {
-      router.replace("/login");
-    }
-  }, [user, router]);
-
-  if (!user) {
+    router.replace("/login");
     return null;
   }
 
