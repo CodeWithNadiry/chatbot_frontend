@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import Header from "../../../components/Header";
 import Input from "../../../components/conversations/Input";
 import NoMessageContent from "../../../components/conversations/NoMessageContent";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 import { useConversationStore } from "../../../store/useConversation";
 import { useAuthStore } from "../../../store/useAuthStore";
@@ -74,12 +76,14 @@ const ConversationsPage = () => {
               <NoMessageContent send={sendQuery} />
             ) : (
               messages.map((msg, i) => (
-                <p
+                <div
                   key={i}
-                  className="p-3 py-2 rounded-xl w-fit max-w-[70%] self-end bg-[#2D5BE3] text-white"
+                  className="p-3 py-2 rounded-xl w-fit max-w-[70%] self-end bg-[#2D5BE3] text-white overflow-hidden"
                 >
-                  {msg.content}
-                </p>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {msg.content}
+                  </ReactMarkdown>
+                </div>
               ))
             )}
 

@@ -6,10 +6,13 @@ import { useParams, useRouter } from "next/navigation";
 import Header from "../../../../components/Header";
 import Input from "../../../../components/conversations/Input";
 import { useAuthStore } from "../../../../store/useAuthStore";
+import remarkGfm from "remark-gfm";
+import ReactMarkdown from "react-markdown";
+
 
 const SingleConversation = () => {
   const { conversationId } = useParams();
-  const {  token } = useAuthStore();
+  const { token } = useAuthStore();
 
   const [messages, setMessages] = useState([]);
   const [userInput, setUserInput] = useState("");
@@ -119,16 +122,18 @@ const SingleConversation = () => {
               <p className="text-gray-400 text-sm">No messages yet</p>
             ) : (
               messages.map((message, index) => (
-                <p
+                <div
                   key={index}
-                  className={`p-3 py-2 rounded-xl w-fit max-w-[70%] transition-all duration-200 ${
+                  className={`p-3 py-2 rounded-xl w-fit max-w-[70%] transition-all duration-200 overflow-hidden ${
                     message.role === "user"
                       ? "self-end bg-[#2D5BE3] text-white"
-                      : "self-start bg-[#dadada]/50 text-gray-600"
+                      : "self-start bg-[#dadada]/50 text-gray-700"
                   }`}
                 >
-                  {message.content}
-                </p>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {message.content}
+                  </ReactMarkdown>
+                </div>
               ))
             )}
 
