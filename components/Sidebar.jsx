@@ -27,11 +27,11 @@ const Sidebar = () => {
         {
           headers: {
             Authorization: `Bearer ${token}`,
-          },
+        },
         },
       );
       const data = await res.json();
-      setConversations(data.conversations || []);
+      setConversations(data || []);
     } catch (err) {
       console.error("Failed to fetch chats", err);
     }
