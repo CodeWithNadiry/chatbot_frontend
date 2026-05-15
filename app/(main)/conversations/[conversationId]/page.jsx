@@ -10,7 +10,7 @@ import Input from "../../../../components/conversations/Input";
 
 import { useAuthStore } from "../../../../store/useAuthStore";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { chatAPI } from "../../../../lib/api/chatAPI";
+import { chatAPI } from "../../../../lib/schemas/api/chat.api";
 
 const SingleConversation = () => {
   const { conversationId } = useParams();

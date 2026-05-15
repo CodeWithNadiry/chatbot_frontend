@@ -7,7 +7,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useSidebarStore } from "../store/useSidebar";
 import { useAuthStore } from "../store/useAuthStore";
 import { useQuery } from "@tanstack/react-query";
-import { chatAPI } from "../lib/api/chatAPI";
+import { chatAPI } from "../lib/schemas/api/chat.api";
 
 const Sidebar = () => {
   const router = useRouter();

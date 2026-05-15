@@ -11,7 +11,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { chatAPI } from "../../../lib/api/chat.api";
+import { chatAPI } from "../../../lib/schemas/api/chat.api";
 
 const ConversationsPage = () => {
   const [userInput, setUserInput] = useState("");
