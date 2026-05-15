@@ -34,6 +34,7 @@ const DocumentsPage = () => {
       const res = await fetch(`${API}/documents`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+
       const data = await res.json();
       return data.documents || [];
     },
@@ -59,11 +60,9 @@ const DocumentsPage = () => {
 
       return res.json();
     },
-    onSuccess: (data) => {
-      queryClient.setQueryData(["documents"], (old = []) => [
-        ...data.documents,
-        ...old,
-      ]);
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["documents"] });
       closeModal();
       setFiles([]);
     },
@@ -80,10 +79,12 @@ const DocumentsPage = () => {
 
       return documentId;
     },
+
     onSuccess: (id) => {
       queryClient.setQueryData(["documents"], (old = []) =>
-        old.filter((d) => d.documentId !== id),
+        old.filter((d) => d.documentId !== id)
       );
+
       closeModal();
       setSelectedDocumentId(null);
     },
@@ -129,11 +130,19 @@ const DocumentsPage = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-[#F9FAFB]">
-      <Header title="My Documents" btnText="Upload" onClick={openUploadModal} />
+      <Header
+        title="My Documents"
+        btnText="Upload"
+        onClick={openUploadModal}
+      />
 
       <main className="w-full max-w-5xl mx-auto px-4 py-6 flex flex-col gap-6">
+
+        {/* UPLOAD MODAL */}
         <Modal open={activeModal === "upload"} onClose={closeModal}>
           <div className="flex flex-col gap-6">
+
+            {/* DROP AREA */}
             <div
               onDragOver={(e) => {
                 e.preventDefault();
@@ -144,11 +153,19 @@ const DocumentsPage = () => {
                 setIsDragging(false);
               }}
               onDrop={handleDrop}
-              className={`border rounded-xl p-8 flex flex-col items-center gap-4 ${
+              className={`border border-gray-200 rounded-xl p-8 flex flex-col items-center gap-4 text-center transition ${
                 isDragging ? "bg-blue-50 border-blue-300" : ""
               }`}
             >
-              <Upload size={26} />
+              <div className="w-14 h-14 flex items-center justify-center rounded-xl bg-[#E8EDFB] text-[#2D5BE3]">
+                <Upload size={26} />
+              </div>
+
+              <h2 className="text-base font-semibold text-gray-900">
+                Drag & drop your files
+              </h2>
+
+              <p className="text-sm text-gray-500">or click below to upload</p>
 
               <input
                 type="file"
@@ -163,10 +180,15 @@ const DocumentsPage = () => {
               </Button>
 
               {files.length > 0 && (
-                <div className="w-full mt-4">
+                <div className="w-full mt-4 bg-white border border-gray-200 rounded-lg p-3 text-left">
+                  <p className="text-sm font-semibold mb-2">Selected Files</p>
+
                   {files.map((file, i) => (
-                    <div key={i} className="flex justify-between text-xs">
-                      <span>{file.name}</span>
+                    <div
+                      key={i}
+                      className="flex justify-between text-xs text-gray-600"
+                    >
+                      <span className="truncate">{file.name}</span>
                       <span>{(file.size / 1024).toFixed(1)} KB</span>
                     </div>
                   ))}
@@ -174,57 +196,81 @@ const DocumentsPage = () => {
               )}
             </div>
 
+            {/* SETTINGS */}
             <div className="flex flex-col gap-4">
-              <h2 className="font-semibold">Processing Settings</h2>
+              <h2 className="text-base font-semibold text-gray-900">
+                Processing Settings
+              </h2>
 
-              {[
-                {
-                  name: "chunkOverlap",
-                  label: "Chunk Overlap",
-                  value: userInputs.chunkOverlap,
-                  min: 0,
-                  max: 150,
-                },
-                {
-                  name: "chunkSize",
-                  label: "Chunk Size",
-                  value: userInputs.chunkSize,
-                  min: 100,
-                  max: 1000,
-                },
-              ].map((item) => (
-                <div key={item.name}>
-                  <div className="flex justify-between text-sm">
-                    <span>{item.label}</span>
-                    <span>{item.value}</span>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {[
+                  {
+                    name: "chunkOverlap",
+                    label: "Chunk Overlap",
+                    value: userInputs.chunkOverlap,
+                    min: 0,
+                    max: 150,
+                    desc: "Shared tokens between chunks for better continuity",
+                  },
+                  {
+                    name: "chunkSize",
+                    label: "Chunk Size",
+                    value: userInputs.chunkSize,
+                    min: 100,
+                    max: 1000,
+                    desc: "Amount of text per chunk (larger = more context)",
+                  },
+                ].map((item) => (
+                  <div
+                    key={item.name}
+                    className="bg-white border border-gray-200 rounded-xl p-5 flex flex-col gap-3"
+                  >
+                    <div className="flex justify-between text-sm">
+                      <p className="text-gray-700">{item.label}</p>
+                      <p className="text-[#2D5BE3] font-medium">
+                        {item.value}
+                      </p>
+                    </div>
+
+                    <input
+                      type="range"
+                      name={item.name}
+                      min={item.min}
+                      max={item.max}
+                      value={item.value}
+                      onChange={handleUserInputs}
+                      className="w-full h-2 bg-gray-200 rounded-lg cursor-pointer accent-[#2D5BE3]"
+                    />
+
+                    <p className="text-xs text-gray-500">{item.desc}</p>
                   </div>
-
-                  <input
-                    type="range"
-                    name={item.name}
-                    min={item.min}
-                    max={item.max}
-                    value={item.value}
-                    onChange={handleUserInputs}
-                  />
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
 
+            {/* ACTIONS */}
             <div className="flex justify-end gap-3">
               <Button variant="secondary" onClick={closeModal}>
                 Cancel
               </Button>
-              <Button onClick={handleUpload}>
+
+              <Button
+                onClick={handleUpload}
+                disabled={!files.length || uploadMutation.isPending}
+              >
                 {uploadMutation.isPending ? "Uploading..." : "Upload"}
               </Button>
             </div>
           </div>
         </Modal>
 
+        {/* DELETE MODAL */}
         <Modal open={activeModal === "delete"} onClose={closeModal}>
-          <div className="flex flex-col gap-4">
-            <h2 className="font-semibold">Delete Document</h2>
+          <div className="flex flex-col gap-5">
+            <h2 className="text-lg font-semibold text-gray-900">
+              Delete Document
+            </h2>
+
             <p className="text-sm text-gray-500">
               Are you sure you want to delete this document?
             </p>
@@ -233,6 +279,7 @@ const DocumentsPage = () => {
               <Button variant="secondary" onClick={closeModal}>
                 Cancel
               </Button>
+
               <Button onClick={handleDelete}>
                 {deleteMutation.isPending ? "Deleting..." : "Delete"}
               </Button>
@@ -240,24 +287,34 @@ const DocumentsPage = () => {
           </div>
         </Modal>
 
-        <div className="bg-white border rounded-xl">
-          {isLoading ? (
-            <p className="p-6">Loading...</p>
-          ) : documents.length === 0 ? (
-            <p className="p-6">No documents</p>
-          ) : (
-            documents.map((doc) => (
-              <div
-                key={doc.documentId}
-                className="flex justify-between p-4 border-b"
-              >
-                <div>{doc.fileName}</div>
-                <button onClick={() => openDeleteModal(doc.documentId)}>
-                  <X size={16} />
-                </button>
+        {/* DOCUMENT LIST */}
+        <div className="flex flex-col gap-3">
+          <h2 className="text-base font-semibold text-gray-900">
+            Uploaded Files
+          </h2>
+
+          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+            {isLoading ? (
+              <div className="p-10 text-gray-500">Loading...</div>
+            ) : documents.length === 0 ? (
+              <div className="p-10 text-center text-gray-500">
+                No documents uploaded yet
               </div>
-            ))
-          )}
+            ) : (
+              documents.map((doc) => (
+                <div
+                  key={doc.documentId}
+                  className="flex justify-between px-5 py-4 border-b border-gray-100 hover:bg-gray-50"
+                >
+                  <div className="text-sm">{doc.fileName}</div>
+
+                  <button onClick={() => openDeleteModal(doc.documentId)}>
+                    <X size={16} />
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </main>
     </div>

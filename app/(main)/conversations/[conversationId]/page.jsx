@@ -40,6 +40,8 @@ const SingleConversation = () => {
     mutationFn: chatAPI.sendQuery,
 
     onSuccess: (data) => {
+      if (!data?.conversationId) return;
+      
       queryClient.invalidateQueries({
         queryKey: ["conversation", data.conversationId],
       });
