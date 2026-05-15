@@ -1,116 +1,75 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 import Header from "../../../../components/Header";
 import Input from "../../../../components/conversations/Input";
-import { useAuthStore } from "../../../../store/useAuthStore";
-import remarkGfm from "remark-gfm";
-import ReactMarkdown from "react-markdown";
 
+import { useAuthStore } from "../../../../store/useAuthStore";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { chatAPI } from "../../../../lib/api/chatAPI";
 
 const SingleConversation = () => {
   const { conversationId } = useParams();
   const { token } = useAuthStore();
-
-  const [messages, setMessages] = useState([]);
-  const [userInput, setUserInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [hasLoaded, setHasLoaded] = useState(false);
   const router = useRouter();
-  useEffect(() => {
-    async function getMessages() {
-      try {
-        setHasLoaded(false);
+  const queryClient = useQueryClient();
 
-        const res = await fetch(
-          `https://chatbotbackend-production-dc6c.up.railway.app/chats/${conversationId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          },
-        );
+  const [userInput, setUserInput] = useState("");
 
-        if (res.status === 404) {
-          router.replace("/conversations");
-          return;
-        }
+  const {
+    data,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["conversation", conversationId],
+    queryFn: () => chatAPI.getConversation(conversationId),
+    enabled: !!conversationId && !!token,
+  });
 
-        if (!res.ok) {
-          throw new Error("Failed to fetch messages");
-        }
+  const messages =
+    data?.messages?.map((m) => ({
+      role: m.role,
+      content: m.content,
+    })) || [];
 
-        const data = await res.json();
+  const sendMutation = useMutation({
+    mutationFn: chatAPI.sendQuery,
 
-        setMessages(
-          [...data.messages].reverse().map((m) => ({
-            role: m.role,
-            content: m.content,
-          })),
-        );
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setHasLoaded(true);
-      }
-    }
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({
+        queryKey: ["conversation", data.conversationId],
+      });
 
-    if (conversationId) getMessages();
-  }, [conversationId, token]);
+      queryClient.invalidateQueries({
+        queryKey: ["conversations"],
+      });
+    },
+  });
 
-  async function sendQuery(question) {
+  function sendQuery(question) {
     if (!question.trim()) return;
 
-    const userMessage = {
-      role: "user",
-      content: question,
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
     setUserInput("");
-    setIsLoading(true);
 
-    try {
-      const res = await fetch(
-        "https://chatbotbackend-production-dc6c.up.railway.app/chats/query",
-        {
-          method: "POST",
-          body: JSON.stringify({
-            question,
-            conversationId,
-          }),
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      );
-
-      if (!res.ok) throw new Error("Failed to send query");
-
-      const data = await res.json();
-
-      const assistantMessage = {
-        role: "assistant",
-        content: data.answer,
-      };
-
-      setMessages((prev) => [...prev, assistantMessage]);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
-    }
+    sendMutation.mutate({
+      question,
+      conversationId,
+    });
   }
-
-  if (error) return <p>{error}</p>;
 
   if (!conversationId) {
-    return router.push("/converstions");
+    router.push("/conversations");
+    return null;
   }
+
+  if (error) {
+    return <p className="p-4 text-red-500">{error.message}</p>;
+  }
+
   return (
     <div className="flex flex-col h-screen bg-[#F9FAFB] overflow-hidden">
       <Header title="Conversation" btnText="+ New Chat" />
@@ -118,13 +77,16 @@ const SingleConversation = () => {
       <div className="flex flex-col flex-1 overflow-hidden">
         <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 pt-10">
           <div className="max-w-5xl mx-auto flex flex-col gap-6 pb-4">
-            {!hasLoaded ? null : messages.length === 0 && !isLoading ? (
+
+            {isLoading ? (
+              <p className="text-gray-400 text-sm">Loading messages...</p>
+            ) : messages.length === 0 ? (
               <p className="text-gray-400 text-sm">No messages yet</p>
             ) : (
               messages.map((message, index) => (
                 <div
                   key={index}
-                  className={`p-3 py-2 rounded-xl w-fit max-w-[70%] transition-all duration-200 overflow-hidden ${
+                  className={`p-3 py-2 rounded-xl w-fit max-w-[70%] overflow-hidden ${
                     message.role === "user"
                       ? "self-end bg-[#2D5BE3] text-white"
                       : "self-start bg-[#dadada]/50 text-gray-700"
@@ -137,13 +99,20 @@ const SingleConversation = () => {
               ))
             )}
 
-            {isLoading && (
-              <p className="text-sm text-gray-400 animate-pulse">Thinking...</p>
+            {/* typing indicator */}
+            {sendMutation.isPending && (
+              <p className="text-sm text-gray-400 animate-pulse">
+                Thinking...
+              </p>
             )}
           </div>
         </div>
 
-        <Input input={userInput} setInput={setUserInput} send={sendQuery} />
+        <Input
+          input={userInput}
+          setInput={setUserInput}
+          send={sendQuery}
+        />
       </div>
     </div>
   );

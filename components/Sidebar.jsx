@@ -3,44 +3,26 @@
 import Image from "next/image";
 import NavLink from "./NavLink";
 import { FileText, MessageSquare, X, House } from "lucide-react";
-import { useEffect, useState } from "react";
-import { useConversationStore } from "../store/useConversation";
 import { useRouter, usePathname } from "next/navigation";
 import { useSidebarStore } from "../store/useSidebar";
 import { useAuthStore } from "../store/useAuthStore";
+import { useQuery } from "@tanstack/react-query";
+import { chatAPI } from "../lib/api/chatAPI";
 
 const Sidebar = () => {
   const router = useRouter();
   const pathname = usePathname();
+
   const { token } = useAuthStore();
-
   const { isOpen, closeSidebar } = useSidebarStore();
-  const { refreshChats } = useConversationStore();
 
-  const [conversations, setConversations] = useState([]);
+  const { data, isLoading } = useQuery({
+    queryKey: ["conversations"],
+    queryFn: chatAPI.getConversations,
+    enabled: !!token,
+  });
 
-  const fetchConversations = async () => {
-    if (!token) return;
-    try {
-      const res = await fetch(
-        "https://chatbotbackend-production-dc6c.up.railway.app/chats",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-        },
-        },
-      );
-      const data = await res.json();
-      setConversations(data || []);
-    } catch (err) {
-      console.error("Failed to fetch chats", err);
-    }
-  };
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchConversations();
-  }, [refreshChats, token]);
+  const conversations = data || [];
 
   function handleChangeRoute(id) {
     router.push(`/conversations/${id}`);
@@ -51,7 +33,6 @@ const Sidebar = () => {
 
   return (
     <>
-      {/* MOBILE OVERLAY */}
       {isOpen && (
         <div
           onClick={closeSidebar}
@@ -59,7 +40,6 @@ const Sidebar = () => {
         />
       )}
 
-      {/* SIDEBAR CONTAINER */}
       <div
         className={`
           fixed md:static top-0 left-0 z-50
@@ -68,7 +48,6 @@ const Sidebar = () => {
           ${isOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0
         `}
       >
-        {/* HEADER (fixed height) */}
         <div className="border-b border-gray-200 flex items-center justify-between p-5 shrink-0">
           <div
             className="flex items-center gap-3 cursor-pointer"
@@ -100,9 +79,7 @@ const Sidebar = () => {
           </button>
         </div>
 
-        {/* SCROLLABLE CONTENT AREA */}
         <div className="flex-1 overflow-y-auto px-4 py-6 scrollbar-thin">
-          {/* NAV LINKS (DO NOT TOUCH STYLES) */}
           <div className="flex flex-col gap-2">
             <NavLink href="/" onClick={closeSidebar}>
               <House size={18} />
@@ -120,14 +97,16 @@ const Sidebar = () => {
             </NavLink>
           </div>
 
-          {/* RECENTS LABEL */}
           <p className="text-sm text-gray-400 mt-6 ml-4 font-semibold">
             Recents
           </p>
 
-          {/* CONVERSATIONS */}
           <div className="mt-2 flex flex-col gap-1">
-            {conversations.length === 0 ? (
+            {isLoading ? (
+              <p className="text-xs text-gray-400 px-3 py-2">
+                Loading chats...
+              </p>
+            ) : conversations.length === 0 ? (
               <p className="text-xs text-gray-400 px-3 py-2">
                 No recent chats yet
               </p>

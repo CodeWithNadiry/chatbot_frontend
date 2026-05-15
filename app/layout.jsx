@@ -1,5 +1,6 @@
 import { Fraunces, DM_Sans } from "next/font/google";
 import "./globals.css";
+import Providers from "./Providers";
 const fraunces = Fraunces({
   subsets: ["latin"],
   variable: "--font-fraunces",
@@ -27,9 +28,9 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${fraunces.variable} ${dmSans.variable}`}>
       <body>
-          <div className="flex overflow-x-hidden">
-            <main className="flex-1">{children}</main>
-          </div>
+          <Providers>
+          <main>{children}</main>
+        </Providers>
       </body>
     </html>
   );
