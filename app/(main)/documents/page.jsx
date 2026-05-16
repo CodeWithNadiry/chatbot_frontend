@@ -135,7 +135,8 @@ const DocumentsPage = () => {
                 setIsDragging(false);
                 setFiles((prev) => [
                   ...prev,
-                  ...Array.from(e.dataTransfer.files),
+                  ...Array.from(e.dataTransfer.files), // e.dataTransfer.files → new files the user dropped into the drag area.
+                  // Array.from(...) → converts the FileList into a normal array.
                 ]);
               }}
               className={`border border-gray-200 rounded-xl p-8 flex flex-col items-center gap-4 text-center transition ${
@@ -242,6 +243,7 @@ const DocumentsPage = () => {
               <Button
                 onClick={handleUpload}
                 disabled={!files.length || uploadMutation.isPending}
+                className={!files.length || uploadMutation.isPending ? 'bg-gray-600 cursor-not-allowed': null}
               >
                 {uploadMutation.isPending ? "Uploading..." : "Upload"}
               </Button>
