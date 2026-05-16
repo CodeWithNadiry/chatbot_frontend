@@ -14,7 +14,7 @@ export default function ProtectedRoutes({ children }) {
     if (!hasHydrated) return;
 
     if (!token) {
-      router.replace("/login");
+      router.replace("/signup");
     }
   }, [token, hasHydrated, router]);
 
