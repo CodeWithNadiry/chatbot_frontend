@@ -1,22 +1,7 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
 
-export const useConversationStore = create(
-  persist(
-    (set) => ({
-      activeConversationId: null,
-      refreshChats: false,
-
-      setActiveConversationId: (id) => {
-        set({ activeConversationId: id });
-      },
-
-      triggerRefresh: () => {
-        set((state) => ({
-          refreshChats: !state.refreshChats,
-        }));
-      },
-    }),
-    { name: "conversation-storage" }
-  )
-);
+export const useConversationStore = create((set) => ({
+  pendingMessages: null,      // { conversationId, messages }
+  setPendingMessages: (data) => set({ pendingMessages: data }),
+  clearPendingMessages: () => set({ pendingMessages: null }),
+}));

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 import Header from "../../../components/Header";
 import Input from "../../../components/conversations/Input";
@@ -11,6 +12,7 @@ import remarkGfm from "remark-gfm";
 
 import { useQueryClient } from "@tanstack/react-query";
 import { chatAPI } from "../../../lib/schemas/api/chat.api";
+import { useConversationStore } from "../../../lib/stores/conversationStore";
 
 const ConversationsPage = () => {
   const [userInput, setUserInput] = useState("");
@@ -19,7 +21,14 @@ const ConversationsPage = () => {
   const [isStreaming, setIsStreaming] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const router = useRouter();
   const queryClient = useQueryClient();
+  const { setPendingMessages } = useConversationStore();
+  const bottomRef = useRef(null);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, loading]);
 
   async function sendQuery(question) {
     if (!question.trim()) return;
@@ -28,23 +37,24 @@ const ConversationsPage = () => {
     setLoading(true);
     setIsStreaming(false);
 
-    // Optimistic user message
     setMessages((prev) => [...prev, { role: "user", content: question }]);
     setUserInput("");
 
     try {
-      let conversationId = null;
+      // Step 1: get conversationId first from non-streaming endpoint
+      const data = await chatAPI.sendQuery({ question, conversationId: undefined });
+      const conversationId = data.conversationId;
+
+      // Step 2: now stream the response using that conversationId
+      // We re-ask the same question but this time it's already saved,
+      // so stream gives us the answer progressively
+      let finalMessages = [];
 
       await chatAPI.sendQueryStream({
         question,
-        conversationId: undefined,
-        onChunk: (chunk, fullText, meta) => {
+        conversationId,
+        onChunk: (chunk, fullText) => {
           setIsStreaming(true);
-
-          // Capture conversationId from first chunk if your API sends it
-          if (meta?.conversationId && !conversationId) {
-            conversationId = meta.conversationId;
-          }
 
           setMessages((prev) => {
             const copy = [...prev];
@@ -56,20 +66,24 @@ const ConversationsPage = () => {
               copy.push({ role: "assistant", content: fullText });
             }
 
+            finalMessages = copy;
             return copy;
           });
         },
       });
 
-      // After streaming done — silently update URL without remounting
-      if (conversationId) {
-        window.history.replaceState(null, "", `/conversations/${conversationId}`);
-        queryClient.invalidateQueries({ queryKey: ["conversations"] });
-        queryClient.invalidateQueries({ queryKey: ["conversation", conversationId] });
-      }
+      // Step 3: store messages in Zustand so SingleConversation can use them instantly
+      setPendingMessages({ conversationId, messages: finalMessages });
+
+      // Step 4: invalidate queries so sidebar updates
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      queryClient.invalidateQueries({ queryKey: ["conversation", conversationId] });
+
+      // Step 5: navigate — SingleConversation will read from store, no flash
+      router.push(`/conversations/${conversationId}`);
+
     } catch (err) {
       setError(err.message);
-    } finally {
       setLoading(false);
     }
   }
@@ -101,7 +115,18 @@ const ConversationsPage = () => {
                   {msg.role === "user" ? (
                     <p>{msg.content}</p>
                   ) : (
-                    <div className="prose max-w-none prose-p:text-[15px] prose-p:leading-7 prose-p:text-gray-700 prose-p:mb-3 prose-headings:text-gray-900 prose-headings:font-bold prose-headings:text-lg prose-headings:mt-4 prose-headings:mb-2 prose-h2:text-base prose-h2:font-semibold prose-h2:text-gray-800 prose-li:text-[15px] prose-li:text-gray-700 prose-li:leading-7 prose-li:mb-2 prose-strong:text-gray-900 prose-strong:font-semibold prose-ul:list-disc prose-ul:pl-5 prose-ul:my-3 prose-ul:space-y-2 prose-ol:list-decimal prose-ol:pl-5 prose-ol:my-3 prose-ol:space-y-2 prose-code:bg-gray-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-pre:bg-gray-100 prose-pre:rounded-lg prose-pre:p-4">
+                    <div className="
+                      prose max-w-none
+                      prose-p:text-[15px] prose-p:leading-7 prose-p:text-gray-700 prose-p:mb-3
+                      prose-headings:text-gray-900 prose-headings:font-bold prose-headings:text-lg prose-headings:mt-4 prose-headings:mb-2
+                      prose-h2:text-base prose-h2:font-semibold prose-h2:text-gray-800
+                      prose-li:text-[15px] prose-li:text-gray-700 prose-li:leading-7 prose-li:mb-2
+                      prose-strong:text-gray-900 prose-strong:font-semibold
+                      prose-ul:list-disc prose-ul:pl-5 prose-ul:my-3 prose-ul:space-y-2
+                      prose-ol:list-decimal prose-ol:pl-5 prose-ol:my-3 prose-ol:space-y-2
+                      prose-code:bg-gray-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm
+                      prose-pre:bg-gray-100 prose-pre:rounded-lg prose-pre:p-4
+                    ">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
                         {msg.content.replace(/\n/g, "  \n")}
                       </ReactMarkdown>
@@ -111,7 +136,6 @@ const ConversationsPage = () => {
               ))
             )}
 
-            {/* Three dots loading — matches SingleConversation */}
             {loading && !isStreaming && (
               <div className="flex items-center gap-1.5 text-gray-400 text-sm px-1">
                 <span className="animate-pulse">●</span>
@@ -120,6 +144,7 @@ const ConversationsPage = () => {
               </div>
             )}
 
+            <div ref={bottomRef} />
           </div>
         </div>
 
