@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 
 import Header from "../../../components/Header";
 import Input from "../../../components/conversations/Input";
@@ -10,67 +9,69 @@ import NoMessageContent from "../../../components/conversations/NoMessageContent
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { chatAPI } from "../../../lib/schemas/api/chat.api";
 
 const ConversationsPage = () => {
   const [userInput, setUserInput] = useState("");
   const [messages, setMessages] = useState([]);
   const [error, setError] = useState(null);
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const router = useRouter();
   const queryClient = useQueryClient();
 
-  const sendMutation = useMutation({
-    mutationFn: chatAPI.sendQuery,
-
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({
-        queryKey: ["conversation", data.conversationId],
-      });
-
-      queryClient.invalidateQueries({
-        queryKey: ["conversations"],
-      });
-
-      // add assistant response
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content: data.answer || "No response",
-        },
-      ]);
-
-      router.replace(`/conversations/${data.conversationId}`);
-    },
-
-    onError: (err) => {
-      setError(err.message);
-    },
-  });
-
-  function sendQuery(question) {
+  async function sendQuery(question) {
     if (!question.trim()) return;
 
     setError(null);
+    setLoading(true);
+    setIsStreaming(false);
 
-    // 1. show user message instantly (OPTIMISTIC UI)
-    setMessages((prev) => [
-      ...prev,
-      { role: "user", content: question },
-    ]);
-
-    // 2. clear input
+    // Optimistic user message
+    setMessages((prev) => [...prev, { role: "user", content: question }]);
     setUserInput("");
 
-    // 3. show "thinking" indicator automatically via isPending
+    try {
+      let conversationId = null;
 
-    // 4. send request
-    sendMutation.mutate({
-      question,
-      conversationId: undefined,
-    });
+      await chatAPI.sendQueryStream({
+        question,
+        conversationId: undefined,
+        onChunk: (chunk, fullText, meta) => {
+          setIsStreaming(true);
+
+          // Capture conversationId from first chunk if your API sends it
+          if (meta?.conversationId && !conversationId) {
+            conversationId = meta.conversationId;
+          }
+
+          setMessages((prev) => {
+            const copy = [...prev];
+            const lastIndex = copy.length - 1;
+
+            if (copy[lastIndex]?.role === "assistant") {
+              copy[lastIndex].content = fullText;
+            } else {
+              copy.push({ role: "assistant", content: fullText });
+            }
+
+            return copy;
+          });
+        },
+      });
+
+      // After streaming done — silently update URL without remounting
+      if (conversationId) {
+        window.history.replaceState(null, "", `/conversations/${conversationId}`);
+        queryClient.invalidateQueries({ queryKey: ["conversations"] });
+        queryClient.invalidateQueries({ queryKey: ["conversation", conversationId] });
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   }
 
   if (error) {
@@ -91,33 +92,38 @@ const ConversationsPage = () => {
               messages.map((msg, i) => (
                 <div
                   key={i}
-                  className={`p-3 py-2 rounded-xl w-fit max-w-[70%] overflow-hidden ${
+                  className={`p-4 rounded-xl max-w-[75%] ${
                     msg.role === "user"
-                      ? "self-end bg-[#2D5BE3] text-white"
-                      : "self-start bg-gray-200 text-gray-800"
+                      ? "ml-auto bg-blue-600 text-white text-sm leading-relaxed"
+                      : "bg-white border border-gray-200 text-gray-800"
                   }`}
                 >
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {msg.content}
-                  </ReactMarkdown>
+                  {msg.role === "user" ? (
+                    <p>{msg.content}</p>
+                  ) : (
+                    <div className="prose max-w-none prose-p:text-[15px] prose-p:leading-7 prose-p:text-gray-700 prose-p:mb-3 prose-headings:text-gray-900 prose-headings:font-bold prose-headings:text-lg prose-headings:mt-4 prose-headings:mb-2 prose-h2:text-base prose-h2:font-semibold prose-h2:text-gray-800 prose-li:text-[15px] prose-li:text-gray-700 prose-li:leading-7 prose-li:mb-2 prose-strong:text-gray-900 prose-strong:font-semibold prose-ul:list-disc prose-ul:pl-5 prose-ul:my-3 prose-ul:space-y-2 prose-ol:list-decimal prose-ol:pl-5 prose-ol:my-3 prose-ol:space-y-2 prose-code:bg-gray-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-pre:bg-gray-100 prose-pre:rounded-lg prose-pre:p-4">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {msg.content.replace(/\n/g, "  \n")}
+                      </ReactMarkdown>
+                    </div>
+                  )}
                 </div>
               ))
             )}
 
-            {/* THINKING STATE */}
-            {sendMutation.isPending && (
-              <p className="text-sm text-gray-400 animate-pulse">
-                Thinking...
-              </p>
+            {/* Three dots loading — matches SingleConversation */}
+            {loading && !isStreaming && (
+              <div className="flex items-center gap-1.5 text-gray-400 text-sm px-1">
+                <span className="animate-pulse">●</span>
+                <span className="animate-pulse delay-75">●</span>
+                <span className="animate-pulse delay-150">●</span>
+              </div>
             )}
+
           </div>
         </div>
 
-        <Input
-          input={userInput}
-          setInput={setUserInput}
-          send={sendQuery}
-        />
+        <Input input={userInput} setInput={setUserInput} send={sendQuery} />
       </div>
     </div>
   );
