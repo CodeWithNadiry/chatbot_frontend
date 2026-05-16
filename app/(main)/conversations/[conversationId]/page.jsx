@@ -10,7 +10,7 @@ import Input from "../../../../components/conversations/Input";
 
 import { useQuery } from "@tanstack/react-query";
 import { chatAPI } from "../../../../lib/schemas/api/chat.api";
-import { useConversationStore } from "../../../../lib/stores/conversationStore";
+import { useConversationStore } from "../../../../store/useConversation";
 
 const SingleConversation = () => {
   const [isStreaming, setIsStreaming] = useState(false);

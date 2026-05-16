@@ -12,7 +12,7 @@ import remarkGfm from "remark-gfm";
 
 import { useQueryClient } from "@tanstack/react-query";
 import { chatAPI } from "../../../lib/schemas/api/chat.api";
-import { useConversationStore } from "../../../lib/stores/conversationStore";
+import { useConversationStore } from "../../../store/useConversation";
 
 const ConversationsPage = () => {
   const [userInput, setUserInput] = useState("");
