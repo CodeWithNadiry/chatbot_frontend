@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -8,60 +8,72 @@ import remarkGfm from "remark-gfm";
 import Header from "../../../../components/Header";
 import Input from "../../../../components/conversations/Input";
 
-import { useAuthStore } from "../../../../store/useAuthStore";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { chatAPI } from "../../../../lib/schemas/api/chat.api";
 
 const SingleConversation = () => {
+  const [isStreaming, setIsStreaming] = useState(false);
   const { conversationId } = useParams();
-  const { token } = useAuthStore();
   const router = useRouter();
-  const queryClient = useQueryClient();
 
   const [userInput, setUserInput] = useState("");
+  const [tempMessages, setTempMessages] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const {
-    data,
-    isLoading,
-    error,
-  } = useQuery({
+  const bottomRef = useRef(null);
+
+  const { data, isLoading, error } = useQuery({
     queryKey: ["conversation", conversationId],
     queryFn: () => chatAPI.getConversation(conversationId),
-    enabled: !!conversationId && !!token,
+    enabled: !!conversationId,
   });
 
-  const messages =
-    data?.messages?.map((m) => ({
-      role: m.role,
-      content: m.content,
-    })) || [];
+  const serverMessages =
+    data?.messages
+      ?.map((m) => ({
+        role: m.role,
+        content: m.content,
+      }))
+      .reverse() || [];
 
-  const sendMutation = useMutation({
-    mutationFn: chatAPI.sendQuery,
+  const messages = [...serverMessages, ...tempMessages];
 
-    onSuccess: (data) => {
-      if (!data?.conversationId) return;
-      
-      queryClient.invalidateQueries({
-        queryKey: ["conversation", data.conversationId],
-      });
-
-      queryClient.invalidateQueries({
-        queryKey: ["conversations"],
-      });
-    },
-  });
-
-  function sendQuery(question) {
+  async function sendQuery(question) {
     if (!question.trim()) return;
 
+    setLoading(true);
+    setIsStreaming(false);
+
+    setTempMessages((prev) => [...prev, { role: "user", content: question }]);
     setUserInput("");
 
-    sendMutation.mutate({
+    await chatAPI.sendQueryStream({
       question,
       conversationId,
+      onChunk: (chunk, fullText) => {
+        setIsStreaming(true);
+
+        setTempMessages((prev) => {
+          const copy = [...prev];
+          const lastIndex = copy.length - 1;
+
+          if (copy[lastIndex]?.role === "assistant") {
+            copy[lastIndex].content = fullText;
+          } else {
+            copy.push({ role: "assistant", content: fullText });
+          }
+
+          return copy;
+        });
+      },
     });
+
+    setLoading(false);
   }
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, loading]);
 
   if (!conversationId) {
     router.push("/conversations");
@@ -77,44 +89,59 @@ const SingleConversation = () => {
       <Header title="Conversation" btnText="+ New Chat" />
 
       <div className="flex flex-col flex-1 overflow-hidden">
-        <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 pt-10">
+        <div className="flex-1 overflow-y-auto px-4 pt-10">
           <div className="max-w-5xl mx-auto flex flex-col gap-6 pb-4">
-
             {isLoading ? (
-              <p className="text-gray-400 text-sm">Loading messages...</p>
-            ) : messages.length === 0 ? (
-              <p className="text-gray-400 text-sm">No messages yet</p>
+              <p>Loading...</p>
             ) : (
-              messages.map((message, index) => (
+              messages.map((msg, i) => (
                 <div
-                  key={index}
-                  className={`p-3 py-2 rounded-xl w-fit max-w-[70%] overflow-hidden ${
-                    message.role === "user"
-                      ? "self-end bg-[#2D5BE3] text-white"
-                      : "self-start bg-[#dadada]/50 text-gray-700"
+                  key={i}
+                  className={`p-4 rounded-xl max-w-[75%] ${
+                    msg.role === "user"
+                      ? "ml-auto bg-blue-600 text-white text-sm leading-relaxed"
+                      : "bg-white border border-gray-200 text-gray-800"
                   }`}
                 >
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {message.content}
-                  </ReactMarkdown>
+                  {msg.role === "user" ? (
+                    <p>{msg.content}</p>
+                  ) : (
+                    <div
+                      className="
+                        prose max-w-none
+                        prose-p:text-[15px] prose-p:leading-7 prose-p:text-gray-700 prose-p:mb-3
+                        prose-headings:text-gray-900 prose-headings:font-bold prose-headings:text-lg prose-headings:mt-4 prose-headings:mb-2
+                        prose-h2:text-base prose-h2:font-semibold prose-h2:text-gray-800
+                        prose-li:text-[15px] prose-li:text-gray-700 prose-li:leading-7 prose-li:mb-2
+                        prose-strong:text-gray-900 prose-strong:font-semibold
+                        prose-ul:list-disc prose-ul:pl-5 prose-ul:my-3 prose-ul:space-y-2
+                        prose-ol:list-decimal prose-ol:pl-5 prose-ol:my-3 prose-ol:space-y-2
+                        prose-code:bg-gray-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm
+                        prose-pre:bg-gray-100 prose-pre:rounded-lg prose-pre:p-4
+                      "
+                    >
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {msg.content.replace(/\n/g, "  \n")}
+                      </ReactMarkdown>
+                    </div>
+                  )}
                 </div>
               ))
             )}
 
-            {/* typing indicator */}
-            {sendMutation.isPending && (
-              <p className="text-sm text-gray-400 animate-pulse">
-                Thinking...
-              </p>
+            {loading && !isStreaming && (
+              <div className="flex items-center gap-1.5 text-gray-400 text-sm px-1">
+                <span className="animate-pulse">●</span>
+                <span className="animate-pulse delay-75">●</span>
+                <span className="animate-pulse delay-150">●</span>
+              </div>
             )}
+
+            <div ref={bottomRef} />
           </div>
         </div>
 
-        <Input
-          input={userInput}
-          setInput={setUserInput}
-          send={sendQuery}
-        />
+        <Input input={userInput} setInput={setUserInput} send={sendQuery} />
       </div>
     </div>
   );

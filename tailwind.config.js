@@ -1,0 +1,25 @@
+/** @type {import('tailwindcss').Config} */
+import typography from "@tailwindcss/typography";
+
+const config = {
+  content: [
+    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
+    "./components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./lib/**/*.{js,ts,jsx,tsx,mdx}",
+  ],
+  theme: {
+    extend: {
+      animation: {
+        pulse: "pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+      },
+      animationDelay: {
+        75: "75ms",
+        150: "150ms",
+      },
+    },
+  },
+  plugins: [typography],
+};
+
+export default config;

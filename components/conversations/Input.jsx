@@ -1,24 +1,26 @@
 "use client";
 
 import { Send } from "lucide-react";
-import { useRef } from "react";
+import { memo, useRef } from "react";
 
 const Input = ({ input, setInput, send }) => {
   const textareaRef = useRef(null);
 
-  function handleChange(e) {
-    setInput(e.target.value);
+  const timeoutRef = useRef(null);
 
+function handleChange(e) {
+  setInput(e.target.value);
+
+  clearTimeout(timeoutRef.current);
+
+  timeoutRef.current = setTimeout(() => {
     const el = textareaRef.current;
-
     if (!el) return;
 
-    el.style.height = "0px";
-
-    const newHeight = Math.min(el.scrollHeight, 260);
-
-    el.style.height = `${newHeight}px`;
-  }
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 260)}px`;
+  }, 50);
+}
 
   function resetTextareaHeight() {
     const el = textareaRef.current;
@@ -84,4 +86,4 @@ const Input = ({ input, setInput, send }) => {
   );
 };
 
-export default Input;
+export default memo(Input);

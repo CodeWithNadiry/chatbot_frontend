@@ -1,16 +1,19 @@
 "use client";
 
+import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-import { authAPI } from "../../../lib/api/auth.api";
 import { useAuthStore } from "../../../store/useAuthStore";
 import { loginSchema } from "../../../lib/schemas/auth.schema";
+import { authAPI } from "../../../lib/schemas/api/auth.api";
 
 const Login = () => {
   const router = useRouter();
   const login = useAuthStore((state) => state.login);
+
+  const [formError, setFormError] = useState(null);
 
   const mutation = useMutation({
     mutationFn: authAPI.login,
@@ -19,10 +22,15 @@ const Login = () => {
       login(data);
       router.push("/documents");
     },
+
+    onError: (err) => {
+      setFormError(err?.message || "Login failed");
+    },
   });
 
   function handleSubmit(e) {
     e.preventDefault();
+    setFormError(null);
 
     const formData = new FormData(e.target);
 
@@ -33,7 +41,10 @@ const Login = () => {
 
     const result = loginSchema.safeParse(payload);
 
-    if (!result.success) return;
+    if (!result.success) {
+      setFormError("Invalid email or password format");
+      return;
+    }
 
     mutation.mutate(payload);
   }
@@ -41,22 +52,71 @@ const Login = () => {
   return (
     <>
       <div className="text-center mb-6">
-        <h2 className="text-xl font-semibold">Welcome back</h2>
-        <p className="text-sm text-gray-500">Login to continue</p>
+        <h2 className="text-xl font-semibold text-gray-900">Welcome back</h2>
+        <p className="text-sm text-gray-500 mt-1">
+          Login to continue to IntelliChat
+        </p>
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <input name="email" placeholder="Email" className="input" />
-        <input name="password" type="password" placeholder="Password" className="input" />
+        <input
+          type="email"
+          name="email"
+          placeholder="Email"
+          className="
+            w-full px-3 py-2.5
+            border border-gray-200 rounded-lg
+            text-sm
+            outline-none
+            focus:ring-2 focus:ring-[#2D5BE3]/30
+            focus:border-[#2D5BE3]
+          "
+        />
 
-        <button disabled={mutation.isPending}>
+        <input
+          type="password"
+          name="password"
+          placeholder="Password"
+          className="
+            w-full px-3 py-2.5
+            border border-gray-200 rounded-lg
+            text-sm
+            outline-none
+            focus:ring-2 focus:ring-[#2D5BE3]/30
+            focus:border-[#2D5BE3]
+          "
+        />
+
+        {/* ERROR UI */}
+        {formError && (
+          <p className="text-sm text-red-500">{formError}</p>
+        )}
+
+        <button
+          disabled={mutation.isPending}
+          className="
+            w-full mt-1
+            bg-[#2D5BE3]
+            text-white
+            py-2.5
+            rounded-lg
+            text-sm font-medium
+            hover:opacity-90
+            transition
+            disabled:opacity-60
+            cursor-pointer
+          "
+        >
           {mutation.isPending ? "Logging..." : "Login"}
         </button>
       </form>
 
-      <p className="text-sm text-center mt-4">
+      <p className="text-sm text-center text-gray-500 mt-5">
         Don&apos;t have an account?{" "}
-        <Link href="/signup" className="text-blue-600">
+        <Link
+          href="/signup"
+          className="text-[#2D5BE3] font-medium hover:underline"
+        >
           Create one
         </Link>
       </p>

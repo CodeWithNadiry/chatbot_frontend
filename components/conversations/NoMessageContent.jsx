@@ -22,9 +22,9 @@ const NoMessageContent = ({send}) => {
 
         <div className="mt-6 flex flex-col gap-3 w-3/4 max-w-md">
           {[
-            "Summarize all my uploaded documents",
-            "What topics are covered in my files?",
-            "Find key decisions in my documents",
+            "What can you do for me?",
+            "Who are you?",
+            "What topics can you help me with?",
           ].map((text, i) => (
             <button
               key={i}
