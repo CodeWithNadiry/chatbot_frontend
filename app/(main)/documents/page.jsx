@@ -47,7 +47,7 @@ const DocumentsPage = () => {
         documentId: crypto.randomUUID(),
         fileName: file.name,
         fileType: file.type,
-        status: "uploading",
+        status: "pending",
         createdAt: new Date().toISOString(),
         optimistic: true,
       }));
@@ -60,9 +60,9 @@ const DocumentsPage = () => {
       return { previousDocuments };
     },
 
-    onError: (err, variables, context) => {
-      queryClient.setQueryData(["documents"], context?.previousDocuments || []);
-    },
+   onError: () => {
+  queryClient.invalidateQueries({ queryKey: ["documents"] });
+},
 
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -243,7 +243,11 @@ const DocumentsPage = () => {
               <Button
                 onClick={handleUpload}
                 disabled={!files.length || uploadMutation.isPending}
-                className={!files.length || uploadMutation.isPending ? 'bg-gray-600 cursor-not-allowed': null}
+                className={
+                  !files.length || uploadMutation.isPending
+                    ? "bg-gray-600 cursor-not-allowed"
+                    : null
+                }
               >
                 {uploadMutation.isPending ? "Uploading..." : "Upload"}
               </Button>
@@ -311,7 +315,7 @@ const DocumentsPage = () => {
                       <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 font-semibold">
                         {doc.fileType?.slice(0, 2).toUpperCase()}
                       </div>
-
+                      {/* {* Takes first 2 character and convert to uppercase *} */}
                       <div className="flex flex-col">
                         <span className="text-sm font-medium text-gray-900 truncate max-w-62.5">
                           {cleanName}
@@ -332,7 +336,7 @@ const DocumentsPage = () => {
                                   ? "bg-yellow-100 text-yellow-700"
                                   : doc.status === "failed"
                                     ? "bg-red-100 text-red-700"
-                                    : doc.status === "uploading"
+                                    : doc.status === "pending"
                                       ? "bg-blue-100 text-blue-700"
                                       : "bg-gray-100 text-gray-600"
                             }`}
