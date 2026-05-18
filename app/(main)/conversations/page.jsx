@@ -42,7 +42,14 @@ const ConversationsPage = () => {
 
     try {
       // Step 1: get conversationId first from non-streaming endpoint
-      const data = await chatAPI.sendQuery({ question, conversationId: undefined });
+      const data = await chatAPI.sendQuery({
+        question,
+        conversationId: undefined,
+      });
+      //       Why you did this?
+      // Because you need:
+      // conversationId
+
       const conversationId = data.conversationId;
 
       // Step 2: now stream the response using that conversationId
@@ -72,16 +79,18 @@ const ConversationsPage = () => {
         },
       });
 
+      setLoading(false);
       // Step 3: store messages in Zustand so SingleConversation can use them instantly
       setPendingMessages({ conversationId, messages: finalMessages });
 
       // Step 4: invalidate queries so sidebar updates
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
-      queryClient.invalidateQueries({ queryKey: ["conversation", conversationId] });
+      queryClient.invalidateQueries({
+        queryKey: ["conversation", conversationId],
+      });
 
       // Step 5: navigate — SingleConversation will read from store, no flash
       router.push(`/conversations/${conversationId}`);
-
     } catch (err) {
       setError(err.message);
       setLoading(false);
@@ -99,14 +108,13 @@ const ConversationsPage = () => {
       <div className="flex flex-col flex-1 overflow-hidden">
         <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 pt-10">
           <div className="max-w-5xl mx-auto flex flex-col gap-6 pb-4">
-
             {messages.length === 0 ? (
               <NoMessageContent send={sendQuery} />
             ) : (
               messages.map((msg, i) => (
                 <div
                   key={i}
-                  className={`p-4 rounded-xl max-w-[75%] ${
+                  className={`p-4 py-2 rounded-xl max-w-[75%] ${
                     msg.role === "user"
                       ? "ml-auto bg-blue-600 text-white text-sm leading-relaxed"
                       : "bg-white border border-gray-200 text-gray-800"
@@ -115,7 +123,8 @@ const ConversationsPage = () => {
                   {msg.role === "user" ? (
                     <p>{msg.content}</p>
                   ) : (
-                    <div className="
+                    <div
+                      className="
                       prose max-w-none
                       prose-p:text-[15px] prose-p:leading-7 prose-p:text-gray-700 prose-p:mb-3
                       prose-headings:text-gray-900 prose-headings:font-bold prose-headings:text-lg prose-headings:mt-4 prose-headings:mb-2
@@ -126,10 +135,11 @@ const ConversationsPage = () => {
                       prose-ol:list-decimal prose-ol:pl-5 prose-ol:my-3 prose-ol:space-y-2
                       prose-code:bg-gray-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm
                       prose-pre:bg-gray-100 prose-pre:rounded-lg prose-pre:p-4
-                    ">
+                    "
+                    >
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {msg.content.replace(/\n/g, "  \n")}
-                      </ReactMarkdown>
+  {msg.content}
+</ReactMarkdown>
                     </div>
                   )}
                 </div>
