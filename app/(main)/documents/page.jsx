@@ -60,7 +60,8 @@ const DocumentsPage = () => {
       return { previousDocuments };
     },
 
-   onError: () => {
+   onError: (error) => {
+    console.log(error)
   queryClient.invalidateQueries({ queryKey: ["documents"] });
 },
 
