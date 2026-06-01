@@ -17,11 +17,12 @@ const Sidebar = () => {
   const { isOpen, closeSidebar } = useSidebarStore();
 
   const { data, isLoading } = useQuery({
-    queryKey: ["conversations"],
-    queryFn: chatAPI.getConversations,
-    enabled: !!token,
-  });
-
+  queryKey: ["conversations"],
+  queryFn: chatAPI.getConversations,
+  enabled: !!token,
+  staleTime: 0,
+  refetchOnMount: true,
+});
   const conversations = data || [];
 
   function handleChangeRoute(id) {

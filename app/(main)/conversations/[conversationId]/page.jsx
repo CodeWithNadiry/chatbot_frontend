@@ -8,11 +8,12 @@ import remarkGfm from "remark-gfm";
 import Header from "../../../../components/Header";
 import Input from "../../../../components/conversations/Input";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { chatAPI } from "../../../../lib/schemas/api/chat.api";
 import { useConversationStore } from "../../../../store/useConversation";
 
 const SingleConversation = () => {
+  const queryClient = useQueryClient();
   const [isStreaming, setIsStreaming] = useState(false);
   const { conversationId } = useParams();
   const router = useRouter();
@@ -36,10 +37,10 @@ const SingleConversation = () => {
 
   // Once server data is available (e.g. after refresh), clear the pending store
   useEffect(() => {
-    if (data && hasPending) {
+    if (data) {
       clearPendingMessages();
     }
-  }, [data]);
+  }, [data, clearPendingMessages]);
 
   const serverMessages =
     data?.messages
@@ -51,6 +52,7 @@ const SingleConversation = () => {
 
   // Priority: pending store → server → temp
   const baseMessages = hasPending ? pendingMessages.messages : serverMessages;
+
   const messages = [...baseMessages, ...tempMessages];
 
   async function sendQuery(question) {
@@ -61,9 +63,6 @@ const SingleConversation = () => {
 
     // If we navigate here from ConversationsPage and still have pending,
     // clear it now since the user is continuing the conversation
-    if (hasPending) {
-      clearPendingMessages();
-    }
 
     setTempMessages((prev) => [...prev, { role: "user", content: question }]);
     setUserInput("");
@@ -89,6 +88,14 @@ const SingleConversation = () => {
       },
     });
 
+    queryClient.invalidateQueries({
+      queryKey: ["conversation", conversationId],
+    });
+
+    queryClient.invalidateQueries({ 
+      queryKey: ["conversations"],
+    });
+
     setLoading(false);
   }
 
@@ -112,43 +119,44 @@ const SingleConversation = () => {
       <div className="flex flex-col flex-1 overflow-hidden">
         <div className="flex-1 overflow-y-auto px-4 pt-10">
           <div className="max-w-5xl mx-auto flex flex-col gap-6 pb-4">
-
             {/* Only show loading spinner if no pending messages and server is fetching */}
-            {isLoading && !hasPending ? (
-              <p>Loading...</p>
-            ) : (
+            {messages.length > 0 ? (
               messages.map((msg, i) => (
                 <div
                   key={i}
-                  className={`p-4 rounded-xl max-w-[75%] ${
+                  className={`p-4 py-2 rounded-xl max-w-[75%] text-md ${
                     msg.role === "user"
-                      ? "ml-auto bg-blue-600 text-white text-sm leading-relaxed"
+                      ? "ml-auto bg-blue-600 text-white  leading-relaxed"
                       : "bg-white border border-gray-200 text-gray-800"
                   }`}
                 >
                   {msg.role === "user" ? (
                     <p>{msg.content}</p>
                   ) : (
-                    <div className="
-                      prose max-w-none
-                      prose-p:text-[15px] prose-p:leading-7 prose-p:text-gray-700 prose-p:mb-3
-                      prose-headings:text-gray-900 prose-headings:font-bold prose-headings:text-lg prose-headings:mt-4 prose-headings:mb-2
-                      prose-h2:text-base prose-h2:font-semibold prose-h2:text-gray-800
-                      prose-li:text-[15px] prose-li:text-gray-700 prose-li:leading-7 prose-li:mb-2
-                      prose-strong:text-gray-900 prose-strong:font-semibold
-                      prose-ul:list-disc prose-ul:pl-5 prose-ul:my-3 prose-ul:space-y-2
-                      prose-ol:list-decimal prose-ol:pl-5 prose-ol:my-3 prose-ol:space-y-2
-                      prose-code:bg-gray-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm
-                      prose-pre:bg-gray-100 prose-pre:rounded-lg prose-pre:p-4
-                    ">
+                    <div
+                      className="
+          prose max-w-none
+          prose-p:text-[15px] prose-p:leading-7 prose-p:text-gray-700 prose-p:mb-3
+          prose-headings:text-gray-900 prose-headings:font-bold prose-headings:text-lg prose-headings:mt-4 prose-headings:mb-2
+          prose-h2:text-base prose-h2:font-semibold prose-h2:text-gray-800
+          prose-li:text-[15px] prose-li:text-gray-700 prose-li:leading-7 prose-li:mb-2
+          prose-strong:text-gray-900 prose-strong:font-semibold
+          prose-ul:list-disc prose-ul:pl-5 prose-ul:my-3 prose-ul:space-y-2
+          prose-ol:list-decimal prose-ol:pl-5 prose-ol:my-3 prose-ol:space-y-2
+          prose-code:bg-gray-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm
+          prose-pre:bg-gray-100 prose-pre:rounded-lg prose-pre:p-4
+        "
+                    >
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {msg.content.replace(/\n/g, "  \n")}
+                        {msg.content}
                       </ReactMarkdown>
                     </div>
                   )}
                 </div>
               ))
-            )}
+            ) : isLoading ? (
+              <p>Loading...</p>
+            ) : null}
 
             {loading && !isStreaming && (
               <div className="flex items-center gap-1.5 text-gray-400 text-sm px-1">

@@ -38,23 +38,30 @@ const ConversationsPage = () => {
     setIsStreaming(false);
 
     setMessages((prev) => [...prev, { role: "user", content: question }]);
+
     setUserInput("");
 
     try {
-      // Step 1: get conversationId first from non-streaming endpoint
       const data = await chatAPI.sendQuery({
         question,
         conversationId: undefined,
       });
-      //       Why you did this?
-      // Because you need:
-      // conversationId
 
       const conversationId = data.conversationId;
 
-      // Step 2: now stream the response using that conversationId
-      // We re-ask the same question but this time it's already saved,
-      // so stream gives us the answer progressively
+      const conversations = queryClient.getQueryData(["conversations"]) || [];
+
+      queryClient.setQueryData(
+        ["conversations"],
+        [
+          {
+            conversationId,
+            title: data.title || question.slice(0, 40),
+          },
+          ...conversations,
+        ],
+      );
+
       let finalMessages = [];
 
       await chatAPI.sendQueryStream({
@@ -70,7 +77,10 @@ const ConversationsPage = () => {
             if (copy[lastIndex]?.role === "assistant") {
               copy[lastIndex].content = fullText;
             } else {
-              copy.push({ role: "assistant", content: fullText });
+              copy.push({
+                role: "assistant",
+                content: fullText,
+              });
             }
 
             finalMessages = copy;
@@ -80,16 +90,16 @@ const ConversationsPage = () => {
       });
 
       setLoading(false);
-      // Step 3: store messages in Zustand so SingleConversation can use them instantly
-      setPendingMessages({ conversationId, messages: finalMessages });
 
-      // Step 4: invalidate queries so sidebar updates
-      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      setPendingMessages({
+        conversationId,
+        messages: finalMessages,
+      });
+
       queryClient.invalidateQueries({
         queryKey: ["conversation", conversationId],
       });
 
-      // Step 5: navigate — SingleConversation will read from store, no flash
       router.push(`/conversations/${conversationId}`);
     } catch (err) {
       setError(err.message);
@@ -114,9 +124,9 @@ const ConversationsPage = () => {
               messages.map((msg, i) => (
                 <div
                   key={i}
-                  className={`p-4 py-2 rounded-xl max-w-[75%] ${
+                  className={`p-4 py-2 rounded-xl max-w-[75%] text-md ${
                     msg.role === "user"
-                      ? "ml-auto bg-blue-600 text-white text-sm leading-relaxed"
+                      ? "ml-auto bg-blue-600 text-white leading-relaxed"
                       : "bg-white border border-gray-200 text-gray-800"
                   }`}
                 >
@@ -125,21 +135,46 @@ const ConversationsPage = () => {
                   ) : (
                     <div
                       className="
-                      prose max-w-none
-                      prose-p:text-[15px] prose-p:leading-7 prose-p:text-gray-700 prose-p:mb-3
-                      prose-headings:text-gray-900 prose-headings:font-bold prose-headings:text-lg prose-headings:mt-4 prose-headings:mb-2
-                      prose-h2:text-base prose-h2:font-semibold prose-h2:text-gray-800
-                      prose-li:text-[15px] prose-li:text-gray-700 prose-li:leading-7 prose-li:mb-2
-                      prose-strong:text-gray-900 prose-strong:font-semibold
-                      prose-ul:list-disc prose-ul:pl-5 prose-ul:my-3 prose-ul:space-y-2
-                      prose-ol:list-decimal prose-ol:pl-5 prose-ol:my-3 prose-ol:space-y-2
-                      prose-code:bg-gray-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm
-                      prose-pre:bg-gray-100 prose-pre:rounded-lg prose-pre:p-4
-                    "
+                        prose max-w-none
+                        prose-p:text-[15px]
+                        prose-p:leading-7
+                        prose-p:text-gray-700
+                        prose-p:mb-3
+                        prose-headings:text-gray-900
+                        prose-headings:font-bold
+                        prose-headings:text-lg
+                        prose-headings:mt-4
+                        prose-headings:mb-2
+                        prose-h2:text-base
+                        prose-h2:font-semibold
+                        prose-h2:text-gray-800
+                        prose-li:text-[15px]
+                        prose-li:text-gray-700
+                        prose-li:leading-7
+                        prose-li:mb-2
+                        prose-strong:text-gray-900
+                        prose-strong:font-semibold
+                        prose-ul:list-disc
+                        prose-ul:pl-5
+                        prose-ul:my-3
+                        prose-ul:space-y-2
+                        prose-ol:list-decimal
+                        prose-ol:pl-5
+                        prose-ol:my-3
+                        prose-ol:space-y-2
+                        prose-code:bg-gray-100
+                        prose-code:px-1.5
+                        prose-code:py-0.5
+                        prose-code:rounded
+                        prose-code:text-sm
+                        prose-pre:bg-gray-100
+                        prose-pre:rounded-lg
+                        prose-pre:p-4
+                      "
                     >
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
-  {msg.content}
-</ReactMarkdown>
+                        {msg.content}
+                      </ReactMarkdown>
                     </div>
                   )}
                 </div>

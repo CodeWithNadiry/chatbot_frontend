@@ -25,7 +25,7 @@ const Signup = () => {
       router.push("/login");
     },
     onError: (err) => {
-      setError(err?.response?.data?.message || "Signup failed");
+      setError(err?.response?.data?.message || "Signup failed"); // backend error message
     },
   });
 

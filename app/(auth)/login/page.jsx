@@ -24,9 +24,24 @@ const Login = () => {
     },
 
     onError: (err) => {
-      setFormError(err?.message || "Login failed");
-    },
-  });
+      setFormError(
+    err?.response?.data?.message || // backend message
+    err?.message ||  // Axios error message
+    "Login failed"
+  );
+  },
+});
+
+  //   Typical Axios Error Structure
+  // {
+  //   message: "Request failed with status code 401",
+  //   response: {
+  //     status: 401,
+  //     data: {
+  //       message: "Invalid email or password"
+  //     }
+  //   }
+  // }
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -41,10 +56,25 @@ const Login = () => {
 
     const result = loginSchema.safeParse(payload);
 
+    // if validation pass:
+    // {
+    // success: true,
+    // data: {
+    //   email: "usman@gmail.com",
+    //   password: "123456"
+    // }
+    // }
+
     if (!result.success) {
       setFormError("Invalid email or password format");
       return;
     }
+
+    // If validation failed:
+    // {
+    //   success: false,
+    //   error: ...
+    // }
 
     mutation.mutate(payload);
   }
@@ -88,9 +118,7 @@ const Login = () => {
         />
 
         {/* ERROR UI */}
-        {formError && (
-          <p className="text-sm text-red-500">{formError}</p>
-        )}
+        {formError && <p className="text-sm text-red-500">{formError}</p>}
 
         <button
           disabled={mutation.isPending}

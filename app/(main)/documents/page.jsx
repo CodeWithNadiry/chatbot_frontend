@@ -60,10 +60,9 @@ const DocumentsPage = () => {
       return { previousDocuments };
     },
 
-   onError: (error) => {
-    console.log(error)
-  queryClient.invalidateQueries({ queryKey: ["documents"] });
-},
+    onError: () => {
+      queryClient.invalidateQueries({ queryKey: ["documents"] });
+    },
 
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -90,8 +89,9 @@ const DocumentsPage = () => {
     formData.append("chunkSize", settings.chunkSize);
     formData.append("chunkOverlap", settings.chunkOverlap);
 
-    files.forEach((file) => formData.append("files", file));
+    files.forEach((file) => formData.append("files", file)); // on backend, we have to do like req.files instead of req.file
 
+    console.log("formData", formData);
     uploadMutation.mutate(formData);
     closeModal();
   }
