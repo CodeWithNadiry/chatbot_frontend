@@ -91,7 +91,6 @@ const DocumentsPage = () => {
 
     files.forEach((file) => formData.append("files", file)); // on backend, we have to do like req.files instead of req.file
 
-    console.log("formData", formData);
     uploadMutation.mutate(formData);
     closeModal();
   }

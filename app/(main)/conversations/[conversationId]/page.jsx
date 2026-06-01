@@ -32,13 +32,16 @@ const SingleConversation = () => {
   const { data, isLoading, error } = useQuery({
     queryKey: ["conversation", conversationId],
     queryFn: () => chatAPI.getConversation(conversationId),
-    enabled: !!conversationId && !hasPending, // skip fetch if we already have messages
+    enabled: !!conversationId,
   });
 
-  // Once server data is available (e.g. after refresh), clear the pending store
+  // FIX: Once server data loads, clear BOTH pending store AND tempMessages
+  // This prevents duplication when navigating back or refreshing
   useEffect(() => {
     if (data) {
       clearPendingMessages();
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setTempMessages([]); // ← KEY FIX: clear optimistic messages once server data is available
     }
   }, [data, clearPendingMessages]);
 
@@ -50,8 +53,9 @@ const SingleConversation = () => {
       }))
       .reverse() || [];
 
-  // Priority: pending store → server → temp
-  const baseMessages = hasPending ? pendingMessages.messages : serverMessages;
+  // FIX: If server data is available, always use it as the base (ignore pending).
+  // Only fall back to pending if server data hasn't loaded yet.
+  const baseMessages = data ? serverMessages : hasPending ? pendingMessages.messages : serverMessages;
 
   const messages = [...baseMessages, ...tempMessages];
 
@@ -60,9 +64,6 @@ const SingleConversation = () => {
 
     setLoading(true);
     setIsStreaming(false);
-
-    // If we navigate here from ConversationsPage and still have pending,
-    // clear it now since the user is continuing the conversation
 
     setTempMessages((prev) => [...prev, { role: "user", content: question }]);
     setUserInput("");
@@ -88,11 +89,13 @@ const SingleConversation = () => {
       },
     });
 
-    queryClient.invalidateQueries({
+    // After streaming completes, invalidate so server data refreshes,
+    // which will trigger the useEffect above to clear tempMessages
+    await queryClient.invalidateQueries({
       queryKey: ["conversation", conversationId],
     });
 
-    queryClient.invalidateQueries({ 
+    queryClient.invalidateQueries({
       queryKey: ["conversations"],
     });
 
@@ -119,14 +122,13 @@ const SingleConversation = () => {
       <div className="flex flex-col flex-1 overflow-hidden">
         <div className="flex-1 overflow-y-auto px-4 pt-10">
           <div className="max-w-5xl mx-auto flex flex-col gap-6 pb-4">
-            {/* Only show loading spinner if no pending messages and server is fetching */}
             {messages.length > 0 ? (
               messages.map((msg, i) => (
                 <div
                   key={i}
                   className={`p-4 py-2 rounded-xl max-w-[75%] text-md ${
                     msg.role === "user"
-                      ? "ml-auto bg-blue-600 text-white  leading-relaxed"
+                      ? "ml-auto bg-blue-600 text-white leading-relaxed"
                       : "bg-white border border-gray-200 text-gray-800"
                   }`}
                 >
@@ -135,17 +137,17 @@ const SingleConversation = () => {
                   ) : (
                     <div
                       className="
-          prose max-w-none
-          prose-p:text-[15px] prose-p:leading-7 prose-p:text-gray-700 prose-p:mb-3
-          prose-headings:text-gray-900 prose-headings:font-bold prose-headings:text-lg prose-headings:mt-4 prose-headings:mb-2
-          prose-h2:text-base prose-h2:font-semibold prose-h2:text-gray-800
-          prose-li:text-[15px] prose-li:text-gray-700 prose-li:leading-7 prose-li:mb-2
-          prose-strong:text-gray-900 prose-strong:font-semibold
-          prose-ul:list-disc prose-ul:pl-5 prose-ul:my-3 prose-ul:space-y-2
-          prose-ol:list-decimal prose-ol:pl-5 prose-ol:my-3 prose-ol:space-y-2
-          prose-code:bg-gray-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm
-          prose-pre:bg-gray-100 prose-pre:rounded-lg prose-pre:p-4
-        "
+                        prose max-w-none
+                        prose-p:text-[15px] prose-p:leading-7 prose-p:text-gray-700 prose-p:mb-3
+                        prose-headings:text-gray-900 prose-headings:font-bold prose-headings:text-lg prose-headings:mt-4 prose-headings:mb-2
+                        prose-h2:text-base prose-h2:font-semibold prose-h2:text-gray-800
+                        prose-li:text-[15px] prose-li:text-gray-700 prose-li:leading-7 prose-li:mb-2
+                        prose-strong:text-gray-900 prose-strong:font-semibold
+                        prose-ul:list-disc prose-ul:pl-5 prose-ul:my-3 prose-ul:space-y-2
+                        prose-ol:list-decimal prose-ol:pl-5 prose-ol:my-3 prose-ol:space-y-2
+                        prose-code:bg-gray-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm
+                        prose-pre:bg-gray-100 prose-pre:rounded-lg prose-pre:p-4
+                      "
                     >
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
                         {msg.content}
