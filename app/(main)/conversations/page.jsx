@@ -38,37 +38,25 @@ const ConversationsPage = () => {
     setIsStreaming(false);
 
     setMessages((prev) => [...prev, { role: "user", content: question }]);
-
     setUserInput("");
 
     try {
-      const data = await chatAPI.sendQuery({
-        question,
-        conversationId: undefined,
-      });
-
-      const conversationId = data.conversationId;
-
-      const conversations = queryClient.getQueryData(["conversations"]) || [];
-
-      queryClient.setQueryData(
-        ["conversations"],
-        [
-          {
-            conversationId,
-            title: data.title || question.slice(0, 40),
-          },
-          ...conversations,
-        ],
-      );
-
+      // FIX: Only use sendQueryStream (no conversationId = backend creates a new one).
+      // Previously sendQuery + sendQueryStream were BOTH called, saving two answers to DB.
+      let conversationId = null;
       let finalMessages = [];
 
       await chatAPI.sendQueryStream({
         question,
-        conversationId,
-        onChunk: (chunk, fullText) => {
+        conversationId: undefined,
+        onChunk: (chunk, fullText, meta) => {
           setIsStreaming(true);
+
+          // Capture conversationId from first chunk metadata if your API sends it,
+          // otherwise it will be set after the stream via the return value below.
+          if (meta?.conversationId) {
+            conversationId = meta.conversationId;
+          }
 
           setMessages((prev) => {
             const copy = [...prev];
@@ -77,30 +65,40 @@ const ConversationsPage = () => {
             if (copy[lastIndex]?.role === "assistant") {
               copy[lastIndex].content = fullText;
             } else {
-              copy.push({
-                role: "assistant",
-                content: fullText,
-              });
+              copy.push({ role: "assistant", content: fullText });
             }
 
             finalMessages = copy;
             return copy;
           });
         },
+        onDone: (meta) => {
+          // Capture conversationId from stream completion metadata
+          if (meta?.conversationId) {
+            conversationId = meta.conversationId;
+          }
+        },
       });
 
       setLoading(false);
 
-      setPendingMessages({
-        conversationId,
-        messages: finalMessages,
-      });
+      // If your sendQueryStream doesn't return conversationId via callbacks,
+      // fall back to a fresh fetch of conversations to get the latest one
+      if (!conversationId) {
+        const freshConversations = await chatAPI.getConversations();
+        conversationId = freshConversations?.[0]?.conversationId;
+      }
 
-      queryClient.invalidateQueries({
-        queryKey: ["conversation", conversationId],
-      });
+      if (conversationId) {
+        queryClient.invalidateQueries({ queryKey: ["conversations"] });
 
-      router.push(`/conversations/${conversationId}`);
+        setPendingMessages({
+          conversationId,
+          messages: finalMessages,
+        });
+
+        router.push(`/conversations/${conversationId}`);
+      }
     } catch (err) {
       setError(err.message);
       setLoading(false);
