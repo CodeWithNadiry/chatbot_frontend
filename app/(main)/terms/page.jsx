@@ -59,7 +59,7 @@ const TermsOfService = () => {
 
       <section className="mb-8">
         <h2 className="text-xl font-semibold mb-3">7. Disclaimer of Warranties</h2>
-        <p>IntelliChat is provided "as is" without any warranties of any kind. We do not guarantee that our service will be uninterrupted, error-free, or completely accurate. AI responses may sometimes be incorrect — always verify important information.</p>
+        <p>IntelliChat is provided as is without any warranties of any kind. We do not guarantee that our service will be uninterrupted, error-free, or completely accurate. AI responses may sometimes be incorrect — always verify important information.</p>
       </section>
 
       <section className="mb-8">
