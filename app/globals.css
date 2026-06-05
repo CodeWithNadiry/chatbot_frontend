@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 /* =========================
    HIDE SCROLLBAR (for modals, carousels, etc.)

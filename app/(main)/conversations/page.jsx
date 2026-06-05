@@ -13,6 +13,7 @@ import remarkGfm from "remark-gfm";
 import { useQueryClient } from "@tanstack/react-query";
 import { chatAPI } from "../../../lib/schemas/api/chat.api";
 import { useConversationStore } from "../../../store/useConversation";
+import remarkBreaks from "remark-breaks";
 
 const ConversationsPage = () => {
   const [userInput, setUserInput] = useState("");
@@ -132,48 +133,33 @@ const ConversationsPage = () => {
                     <p>{msg.content}</p>
                   ) : (
                     <div
-                      className="
-                        prose max-w-none
-                        prose-p:text-[15px]
-                        prose-p:leading-7
-                        prose-p:text-gray-700
-                        prose-p:mb-3
-                        prose-headings:text-gray-900
-                        prose-headings:font-bold
-                        prose-headings:text-lg
-                        prose-headings:mt-4
-                        prose-headings:mb-2
-                        prose-h2:text-base
-                        prose-h2:font-semibold
-                        prose-h2:text-gray-800
-                        prose-li:text-[15px]
-                        prose-li:text-gray-700
-                        prose-li:leading-7
-                        prose-li:mb-2
-                        prose-strong:text-gray-900
-                        prose-strong:font-semibold
-                        prose-ul:list-disc
-                        prose-ul:pl-5
-                        prose-ul:my-3
-                        prose-ul:space-y-2
-                        prose-ol:list-decimal
-                        prose-ol:pl-5
-                        prose-ol:my-3
-                        prose-ol:space-y-2
-                        prose-code:bg-gray-100
-                        prose-code:px-1.5
-                        prose-code:py-0.5
-                        prose-code:rounded
-                        prose-code:text-sm
-                        prose-pre:bg-gray-100
-                        prose-pre:rounded-lg
-                        prose-pre:p-4
-                      "
-                    >
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {msg.content}
-                      </ReactMarkdown>
-                    </div>
+                                          className="prose max-w-none
+                      prose-p:text-md prose-p:leading-7 prose-p:text-gray-800
+                      prose-h1:text-4xl prose-h1:font-bold prose-h1:text-gray-900 prose-h1:mb-3 prose-h1:mt-5
+                      prose-h2:text-2xl prose-h2:font-bold prose-h2:text-gray-900 prose-h2:mb-2 prose-h2:mt-4
+                      prose-h3:text-2xl prose-h3:font-semibold prose-h3:text-gray-800 prose-h3:mb-2 prose-h3:mt-3
+                      prose-li:text-md prose-li:text-gray-700 prose-li:leading-7
+                      prose-ul:my-2 prose-ul:pl-5
+                      prose-ol:my-2 prose-ol:pl-5
+                      prose-strong:font-semibold prose-strong:text-gray-900
+                      prose-a:text-blue-600 prose-a:underline
+                      prose-code:bg-gray-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm
+                      prose-pre:bg-gray-100 prose-pre:rounded-lg prose-pre:p-4
+                    "
+                                        >
+                                          <ReactMarkdown
+                                            remarkPlugins={[remarkGfm, remarkBreaks]}
+                                            components={{
+                                              p: ({ children }) => (
+                                                <p className="mb-3 leading-7 text-[15px] text-gray-800">
+                                                  {children}
+                                                </p>
+                                              ),
+                                            }}
+                                          >
+                                            {msg.content}
+                                          </ReactMarkdown>
+                                        </div>
                   )}
                 </div>
               ))
