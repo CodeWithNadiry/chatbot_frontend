@@ -3,9 +3,10 @@
 import { Send, Mail, CheckCircle } from "lucide-react";
 import { memo, useRef, useState, useEffect } from "react";
 import { useAuthStore } from "../../store/useAuthStore";
+import axios from "axios";
 
 const Input = ({ input, setInput, send }) => {
-  const {token} = useAuthStore();
+  const { token } = useAuthStore();
   const textareaRef = useRef(null);
   const timeoutRef = useRef(null);
 
@@ -16,16 +17,16 @@ const Input = ({ input, setInput, send }) => {
   useEffect(() => {
     async function checkStatus() {
       try {
-        const res = await fetch(
+        const res = await axios.get(
           `https://chatbotbackend-production-dc6c.up.railway.app/integrations/google/status`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
             },
-          }
+          },
         );
-        const data = await res.json();
-        setGmailConnected(data.connected);
+
+        setGmailConnected(res.data.connected);
       } catch (err) {
         console.error("Failed to check Gmail status", err);
       }
@@ -46,23 +47,24 @@ const Input = ({ input, setInput, send }) => {
   }, []);
 
   async function handleConnectGmail() {
-    try {
-      setGmailLoading(true);
-      const res = await fetch(
-        `https://chatbotbackend-production-dc6c.up.railway.app/integrations/google/url`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      const data = await res.json();
-      window.location.href = data.url; // redirect to Google OAuth
-    } catch (err) {
-      console.error("Failed to get Gmail auth URL", err);
-      setGmailLoading(false);
-    }
+  try {
+    setGmailLoading(true);
+
+    const res = await axios.get(
+      "https://chatbotbackend-production-dc6c.up.railway.app/integrations/google/url",
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    window.location.href = res.data.url;
+  } catch (err) {
+    console.error("Failed to get Gmail auth URL", err);
+    setGmailLoading(false);
   }
+}
 
   function handleChange(e) {
     setInput(e.target.value);
@@ -94,16 +96,16 @@ const Input = ({ input, setInput, send }) => {
   return (
     <div className="w-full bg-[#F9FAFB]">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-
         {/* Gmail Connect Button */}
         <div className="flex justify-end mb-2">
           <button
             onClick={handleConnectGmail}
             disabled={gmailConnected || gmailLoading}
             className={`flex items-center gap-2 text-sm px-3 py-1.5 rounded-lg border transition-all
-              ${gmailConnected
-                ? "border-green-200 bg-green-50 text-green-600 cursor-default"
-                : "border-gray-200 bg-white text-gray-600 hover:border-blue-300 hover:text-blue-600 cursor-pointer"
+              ${
+                gmailConnected
+                  ? "border-green-200 bg-green-50 text-green-600 cursor-default"
+                  : "border-gray-200 bg-white text-gray-600 hover:border-blue-300 hover:text-blue-600 cursor-pointer"
               }`}
           >
             {gmailConnected ? (
@@ -159,7 +161,6 @@ const Input = ({ input, setInput, send }) => {
             <Send className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
         </div>
-
       </div>
     </div>
   );

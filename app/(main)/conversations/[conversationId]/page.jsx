@@ -62,6 +62,7 @@ const SingleConversation = () => {
   const messages = [...baseMessages, ...tempMessages];
 
   async function sendQuery(question) {
+    console.log(question)
     if (!question.trim()) return;
 
     setOriginalQuestion(question); // save question before clearing
@@ -112,10 +113,8 @@ const SingleConversation = () => {
 
   async function handleSendEmail() {
     try {
-      console.log("originalQuestion:", originalQuestion);
-     console.log("emailDraft:", emailDraft);
       const response = await axios.post(
-        "https://chatbotbackend-production-dc6c.up.railway.app/chats/sendEmail",
+        "https://chatbotbackend-production-dc6c.up.railway.app/sendEmail",
         {
           ...emailDraft,
           question: originalQuestion,
