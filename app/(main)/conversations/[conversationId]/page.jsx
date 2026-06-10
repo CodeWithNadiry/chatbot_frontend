@@ -114,7 +114,7 @@ const SingleConversation = () => {
   async function handleSendEmail() {
     try {
       const response = await axios.post(
-        "https://chatbotbackend-production-dc6c.up.railway.app/sendEmail",
+        "https://chatbotbackend-production-dc6c.up.railway.app/chats/sendEmail",
         {
           ...emailDraft,
           question: originalQuestion,
