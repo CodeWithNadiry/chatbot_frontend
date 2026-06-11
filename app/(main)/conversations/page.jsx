@@ -83,6 +83,7 @@ const ConversationsPage = () => {
       if (result.isEmailDraft) {
         setEmailDraft(result.emailDraftFromBackend.emailDraft);
         setToolName(result.emailDraftFromBackend.toolName);
+        setCurrentConversationId(result.conversationId); // ← save it here
         setEmailModalOpen(true);
         return;
       }
@@ -97,7 +98,6 @@ const ConversationsPage = () => {
         setPendingMessages({ conversationId, messages: finalMessages });
         router.push(`/conversations/${conversationId}`);
       }
-
     } catch (err) {
       setError(err.message);
       setLoading(false);
@@ -119,7 +119,7 @@ const ConversationsPage = () => {
           toolName,
           conversationId: currentConversationId,
         },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
       const { reply, conversationId } = response.data;
@@ -151,11 +151,16 @@ const ConversationsPage = () => {
                 <Mail size={22} />
               </div>
               <div>
-                <h2 className="text-base font-semibold text-gray-900">Review your email</h2>
+                <h2 className="text-base font-semibold text-gray-900">
+                  Review your email
+                </h2>
                 <p className="text-sm text-gray-500">Edit before sending</p>
               </div>
             </div>
-            <button onClick={() => setEmailModalOpen(false)} className="text-gray-400 hover:text-gray-600 transition cursor-pointer">
+            <button
+              onClick={() => setEmailModalOpen(false)}
+              className="text-gray-400 hover:text-gray-600 transition cursor-pointer"
+            >
               <X size={20} />
             </button>
           </div>
@@ -163,20 +168,47 @@ const ConversationsPage = () => {
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-gray-700">To</label>
-              <input type="text" value={emailDraft?.to || ""} name="to" onChange={changeDraftValues} className="border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 outline-none focus:border-[#2D5BE3] transition w-full" />
+              <input
+                type="text"
+                value={emailDraft?.to || ""}
+                name="to"
+                onChange={changeDraftValues}
+                className="border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 outline-none focus:border-[#2D5BE3] transition w-full"
+              />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700">Subject</label>
-              <input type="text" value={emailDraft?.subject || ""} name="subject" onChange={changeDraftValues} className="border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 outline-none focus:border-[#2D5BE3] transition w-full" />
+              <label className="text-sm font-medium text-gray-700">
+                Subject
+              </label>
+              <input
+                type="text"
+                value={emailDraft?.subject || ""}
+                name="subject"
+                onChange={changeDraftValues}
+                className="border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 outline-none focus:border-[#2D5BE3] transition w-full"
+              />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700">Message</label>
-              <textarea rows={5} value={emailDraft?.message || ""} name="message" onChange={changeDraftValues} className="border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 outline-none focus:border-[#2D5BE3] transition w-full resize-none" />
+              <label className="text-sm font-medium text-gray-700">
+                Message
+              </label>
+              <textarea
+                rows={5}
+                value={emailDraft?.message || ""}
+                name="message"
+                onChange={changeDraftValues}
+                className="border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 outline-none focus:border-[#2D5BE3] transition w-full resize-none"
+              />
             </div>
           </div>
 
           <div className="flex justify-end gap-3">
-            <Button variant="secondary" onClick={() => setEmailModalOpen(false)}>Cancel</Button>
+            <Button
+              variant="secondary"
+              onClick={() => setEmailModalOpen(false)}
+            >
+              Cancel
+            </Button>
             <Button onClick={handleSendEmail}>Send Email</Button>
           </div>
         </div>
@@ -189,11 +221,15 @@ const ConversationsPage = () => {
               <NoMessageContent send={sendQuery} />
             ) : (
               messages.map((msg, i) => (
-                <div key={i} className={`p-4 py-2 rounded-xl max-w-[75%] text-md ${msg.role === "user" ? "ml-auto bg-blue-600 text-white leading-relaxed" : "bg-white border border-gray-200 text-gray-800"}`}>
+                <div
+                  key={i}
+                  className={`p-4 py-2 rounded-xl max-w-[75%] text-md ${msg.role === "user" ? "ml-auto bg-blue-600 text-white leading-relaxed" : "bg-white border border-gray-200 text-gray-800"}`}
+                >
                   {msg.role === "user" ? (
                     <p>{msg.content}</p>
                   ) : (
-                    <div className="prose max-w-none
+                    <div
+                      className="prose max-w-none
                       prose-p:text-md prose-p:leading-7 prose-p:text-gray-800
                       prose-h2:text-2xl prose-h2:font-bold prose-h2:text-gray-900
                       prose-h3:text-xl prose-h3:font-semibold prose-h3:text-gray-800
@@ -203,8 +239,18 @@ const ConversationsPage = () => {
                       prose-a:text-blue-600 prose-a:underline
                       prose-code:bg-gray-800 prose-code:text-green-400 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:font-mono
                       prose-pre:bg-gray-900 prose-pre:rounded-lg prose-pre:p-4 prose-pre:overflow-x-auto prose-pre:text-gray-100
-                    ">
-                      <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]} components={{ p: ({ children }) => <p className="mb-3 leading-7 text-[15px] text-gray-800">{children}</p> }}>
+                    "
+                    >
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm, remarkBreaks]}
+                        components={{
+                          p: ({ children }) => (
+                            <p className="mb-3 leading-7 text-[15px] text-gray-800">
+                              {children}
+                            </p>
+                          ),
+                        }}
+                      >
                         {msg.content}
                       </ReactMarkdown>
                     </div>
