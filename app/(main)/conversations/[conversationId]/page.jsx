@@ -47,21 +47,24 @@ const SingleConversation = () => {
     }
   }, [data, clearPendingMessages]);
 
-  const serverMessages = data?.messages?.map((m) => ({
-    role: m.role,
-    content: m.content,
-  })).reverse() || [];
+  const serverMessages =
+    data?.messages
+      ?.map((m) => ({
+        role: m.role,
+        content: m.content,
+      }))
+      .reverse() || [];
 
   const baseMessages = data
     ? serverMessages
     : hasPending
-    ? pendingMessages.messages
-    : serverMessages;
+      ? pendingMessages.messages
+      : serverMessages;
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const messages = [...baseMessages, ...tempMessages];
-async function sendQuery(question) {
-    console.log(question)
+  async function sendQuery(question) {
+    console.log(question);
     if (!question.trim()) return;
 
     setOriginalQuestion(question);
@@ -104,7 +107,9 @@ async function sendQuery(question) {
       setToolName(result.emailDraftFromBackend.toolName);
       setEmailModalOpen(true);
     } else {
-      await queryClient.invalidateQueries({ queryKey: ["conversation", conversationId] });
+      await queryClient.invalidateQueries({
+        queryKey: ["conversation", conversationId],
+      });
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
     }
 
@@ -128,7 +133,7 @@ async function sendQuery(question) {
         },
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       const { reply } = response.data;
@@ -142,7 +147,9 @@ async function sendQuery(question) {
       setEmailModalOpen(false);
       setEmailDraft(null);
 
-      await queryClient.invalidateQueries({ queryKey: ["conversation", conversationId] });
+      await queryClient.invalidateQueries({
+        queryKey: ["conversation", conversationId],
+      });
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
     } catch (err) {
       console.error("Email send failed:", err);
@@ -166,7 +173,6 @@ async function sendQuery(question) {
 
       <div className="flex flex-col flex-1 overflow-hidden">
         <div className="flex-1 overflow-y-auto px-4 pt-10">
-
           <Modal open={emailModalOpen} onClose={() => setEmailModalOpen(false)}>
             <div className="flex flex-col gap-6 w-full max-sm:min-w-64 min-w-sm lg:min-w-xl">
               <div className="flex items-center justify-between">
@@ -175,7 +181,9 @@ async function sendQuery(question) {
                     <Mail size={22} />
                   </div>
                   <div>
-                    <h2 className="text-base font-semibold text-gray-900">Review your email</h2>
+                    <h2 className="text-base font-semibold text-gray-900">
+                      Review your email
+                    </h2>
                     <p className="text-sm text-gray-500">Edit before sending</p>
                   </div>
                 </div>
@@ -189,7 +197,9 @@ async function sendQuery(question) {
 
               <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-medium text-gray-700">To</label>
+                  <label className="text-sm font-medium text-gray-700">
+                    To
+                  </label>
                   <input
                     type="text"
                     value={emailDraft?.to || ""}
@@ -199,7 +209,9 @@ async function sendQuery(question) {
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-medium text-gray-700">Subject</label>
+                  <label className="text-sm font-medium text-gray-700">
+                    Subject
+                  </label>
                   <input
                     type="text"
                     value={emailDraft?.subject || ""}
@@ -209,7 +221,9 @@ async function sendQuery(question) {
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-medium text-gray-700">Message</label>
+                  <label className="text-sm font-medium text-gray-700">
+                    Message
+                  </label>
                   <textarea
                     rows={5}
                     value={emailDraft?.message || ""}
@@ -221,7 +235,10 @@ async function sendQuery(question) {
               </div>
 
               <div className="flex justify-end gap-3">
-                <Button variant="secondary" onClick={() => setEmailModalOpen(false)}>
+                <Button
+                  variant="secondary"
+                  onClick={() => setEmailModalOpen(false)}
+                >
                   Cancel
                 </Button>
                 <Button onClick={handleSendEmail}>Send Email</Button>
@@ -243,7 +260,8 @@ async function sendQuery(question) {
                   {msg.role === "user" ? (
                     <p>{msg.content}</p>
                   ) : (
-                    <div className="prose max-w-none
+                    <div
+                      className="prose max-w-none
                       prose-p:text-md prose-p:leading-7 prose-p:text-gray-800
                       prose-h1:text-4xl prose-h1:font-bold prose-h1:text-gray-900 prose-h1:mb-3 prose-h1:mt-5
                       prose-h2:text-2xl prose-h2:font-bold prose-h2:text-gray-900 prose-h2:mb-2 prose-h2:mt-4
@@ -255,12 +273,15 @@ async function sendQuery(question) {
                       prose-a:text-blue-600 prose-a:underline
                       prose-code:bg-gray-800 prose-code:text-green-400 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:font-mono
                       prose-pre:bg-gray-900 prose-pre:rounded-lg prose-pre:p-4 prose-pre:overflow-x-auto prose-pre:text-gray-100
-                    ">
+                    "
+                    >
                       <ReactMarkdown
                         remarkPlugins={[remarkGfm, remarkBreaks]}
                         components={{
                           p: ({ children }) => (
-                            <p className="mb-3 leading-7 text-[15px] text-gray-800">{children}</p>
+                            <p className="mb-3 leading-7 text-[15px] text-gray-800">
+                              {children}
+                            </p>
                           ),
                         }}
                       >
