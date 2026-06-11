@@ -47,24 +47,24 @@ const Input = ({ input, setInput, send }) => {
   }, []);
 
   async function handleConnectGmail() {
-  try {
-    setGmailLoading(true);
+    try {
+      setGmailLoading(true);
 
-    const res = await axios.get(
-      "https://chatbotbackend-production-dc6c.up.railway.app/integrations/google/url",
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
+      const res = await axios.get(
+        "https://chatbotbackend-production-dc6c.up.railway.app/integrations/google/url",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
-      }
-    );
+      );
 
-    window.location.href = res.data.url;
-  } catch (err) {
-    console.error("Failed to get Gmail auth URL", err);
-    setGmailLoading(false);
+      window.location.href = res.data.url;
+    } catch (err) {
+      console.error("Failed to get Gmail auth URL", err);
+      setGmailLoading(false);
+    }
   }
-}
 
   function handleChange(e) {
     setInput(e.target.value);
