@@ -60,12 +60,11 @@ const SingleConversation = () => {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const messages = [...baseMessages, ...tempMessages];
-
-  async function sendQuery(question) {
+async function sendQuery(question) {
     console.log(question)
     if (!question.trim()) return;
 
-    setOriginalQuestion(question); // save question before clearing
+    setOriginalQuestion(question);
     setLoading(true);
     setIsStreaming(false);
     setTempMessages((prev) => [...prev, { role: "user", content: question }]);
@@ -75,8 +74,16 @@ const SingleConversation = () => {
       question,
       conversationId,
       onChunk: (chunk, fullText) => {
-        // only update UI if it's not an email draft
         if (!fullText.startsWith("{")) {
+          // detect repetition loop
+          const words = fullText.split(" ");
+          const last = words.slice(-12);
+          const unique = new Set(last);
+          if (last.length >= 12 && unique.size <= 3) {
+            setIsStreaming(false);
+            return;
+          }
+
           setIsStreaming(true);
           setTempMessages((prev) => {
             const copy = [...prev];
@@ -93,12 +100,10 @@ const SingleConversation = () => {
     });
 
     if (result.isEmailDraft) {
-      // open modal with draft — don't show anything in chat yet
       setEmailDraft(result.emailDraftFromBackend.emailDraft);
       setToolName(result.emailDraftFromBackend.toolName);
       setEmailModalOpen(true);
     } else {
-      // normal RAG — already shown via onChunk
       await queryClient.invalidateQueries({ queryKey: ["conversation", conversationId] });
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
     }
